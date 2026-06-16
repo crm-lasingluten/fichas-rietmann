@@ -270,30 +270,7 @@ var ALERG_ROWS_EN = [
   ['moluscos','Molluscs and products thereof'],
 ];
 
-function toggleBold() {
-  document.getElementById('f-ingredientes').focus();
-  document.execCommand('bold');
-  syncIngredientes();
-}
-
-function syncIngredientes() {
-  var el = document.getElementById('f-ingredientes');
-  var raw = el.innerHTML
-    .replace(/<b>(.*?)<\/b>/gi, '**$1**')
-    .replace(/<strong>(.*?)<\/strong>/gi, '**$1**')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&nbsp;/g,' ');
-  document.getElementById('f-ingredientes-raw').value = raw;
-}
-
-function setIngredientesHTML(raw) {
-  if (!raw) { document.getElementById('f-ingredientes').innerHTML = ''; return; }
-  var html = raw.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-  document.getElementById('f-ingredientes').innerHTML = html;
-  syncIngredientes();
-}
-
-
+function selOpts(val) {
   return ['NO','SI','<20 ppm'].map(function(o) { return '<option' + (o === val ? ' selected' : '') + '>' + o + '</option>'; }).join('');
 }
 
@@ -348,7 +325,7 @@ function fillForm(d) {
   s('f-apariencia', d && d.apariencia ? d.apariencia : '');
   s('f-olor', d && d.olor ? d.olor : '');
   s('f-dosis', d && d.dosis_receta);
-  setIngredientesHTML(d && d.ingredientes);
+  s('f-ingredientes', d && d.ingredientes);
   s('f-nut-kj', d && d.nut_energia_kj); s('f-nut-kcal', d && d.nut_energia_kcal);
   s('f-nut-grasa', d && d.nut_grasa); s('f-nut-sat', d && d.nut_grasa_saturada);
   s('f-nut-carbs', d && d.nut_carbohidratos); s('f-nut-azuc', d && d.nut_azucares);
@@ -374,7 +351,7 @@ function getFormData() {
   var data = {
     nombre: v('f-nombre'), articulo_no: v('f-articulo'), descripcion: v('f-descripcion'),
     apariencia: v('f-apariencia'), olor: v('f-olor'), dosis_receta: v('f-dosis'),
-    ingredientes: document.getElementById('f-ingredientes-raw').value || null,
+    ingredientes: v('f-ingredientes'),
     nut_energia_kj: n('f-nut-kj'), nut_energia_kcal: n('f-nut-kcal'),
     nut_grasa: n('f-nut-grasa'), nut_grasa_saturada: n('f-nut-sat'),
     nut_carbohidratos: n('f-nut-carbs'), nut_azucares: n('f-nut-azuc'),
