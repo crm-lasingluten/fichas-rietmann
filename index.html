@@ -344,7 +344,7 @@ async function loadProducts() {
           <button class="btn btn-danger" onclick="deleteProduct('${p.id}')">🗑️</button>
         </div>
       </div>`).join('')+'</div>';
-  } catch(e) { el.innerHTML = `<div class="alert alert-error" style="display:block">Error: ${e.message}</div>`; }
+  } catch(e) { el.innerHTML = `<div class="alert alert-error" style="display:block">Error: ${e.message} | ${JSON.stringify(e)}</div>`; }
 }
 
 async function saveProduct() {
