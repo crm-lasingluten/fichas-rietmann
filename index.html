@@ -115,7 +115,18 @@ textarea { resize: vertical; min-height: 70px; }
 
       <hr class="section-divider">
       <h3>Ingredientes</h3>
-      <div class="field"><textarea id="f-ingredientes" rows="5" placeholder="Lista completa. Usa MAYÚSCULAS para los alérgenos en negrita, ej: proteína de TRIGO"></textarea></div>
+      <div class="field">
+        <div style="border:1px solid #ddd;border-radius:4px;overflow:hidden">
+          <div style="background:#f5f5f5;padding:6px 10px;border-bottom:1px solid #ddd;display:flex;gap:6px;align-items:center">
+            <button type="button" onclick="toggleBold()" style="padding:3px 10px;font-weight:bold;border:1px solid #ccc;border-radius:3px;background:white;cursor:pointer;font-size:13px">B</button>
+            <span style="font-size:11px;color:#aaa">Selecciona texto y pulsa B para negrita</span>
+          </div>
+          <div id="f-ingredientes" contenteditable="true"
+            style="min-height:90px;padding:10px;font-size:13px;font-family:Arial;line-height:1.6;outline:none"
+            oninput="syncIngredientes()"></div>
+        </div>
+        <input type="hidden" id="f-ingredientes-raw">
+      </div>
 
       <hr class="section-divider">
       <h3>Valores Nutricionales — Premezcla (por 100g)</h3>
@@ -259,7 +270,30 @@ var ALERG_ROWS_EN = [
   ['moluscos','Molluscs and products thereof'],
 ];
 
-function selOpts(val) {
+function toggleBold() {
+  document.getElementById('f-ingredientes').focus();
+  document.execCommand('bold');
+  syncIngredientes();
+}
+
+function syncIngredientes() {
+  var el = document.getElementById('f-ingredientes');
+  var raw = el.innerHTML
+    .replace(/<b>(.*?)<\/b>/gi, '**$1**')
+    .replace(/<strong>(.*?)<\/strong>/gi, '**$1**')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&nbsp;/g,' ');
+  document.getElementById('f-ingredientes-raw').value = raw;
+}
+
+function setIngredientesHTML(raw) {
+  if (!raw) { document.getElementById('f-ingredientes').innerHTML = ''; return; }
+  var html = raw.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+  document.getElementById('f-ingredientes').innerHTML = html;
+  syncIngredientes();
+}
+
+
   return ['NO','SI','<20 ppm'].map(function(o) { return '<option' + (o === val ? ' selected' : '') + '>' + o + '</option>'; }).join('');
 }
 
@@ -314,7 +348,7 @@ function fillForm(d) {
   s('f-apariencia', d && d.apariencia ? d.apariencia : '');
   s('f-olor', d && d.olor ? d.olor : '');
   s('f-dosis', d && d.dosis_receta);
-  s('f-ingredientes', d && d.ingredientes);
+  setIngredientesHTML(d && d.ingredientes);
   s('f-nut-kj', d && d.nut_energia_kj); s('f-nut-kcal', d && d.nut_energia_kcal);
   s('f-nut-grasa', d && d.nut_grasa); s('f-nut-sat', d && d.nut_grasa_saturada);
   s('f-nut-carbs', d && d.nut_carbohidratos); s('f-nut-azuc', d && d.nut_azucares);
@@ -340,7 +374,7 @@ function getFormData() {
   var data = {
     nombre: v('f-nombre'), articulo_no: v('f-articulo'), descripcion: v('f-descripcion'),
     apariencia: v('f-apariencia'), olor: v('f-olor'), dosis_receta: v('f-dosis'),
-    ingredientes: v('f-ingredientes'),
+    ingredientes: document.getElementById('f-ingredientes-raw').value || null,
     nut_energia_kj: n('f-nut-kj'), nut_energia_kcal: n('f-nut-kcal'),
     nut_grasa: n('f-nut-grasa'), nut_grasa_saturada: n('f-nut-sat'),
     nut_carbohidratos: n('f-nut-carbs'), nut_azucares: n('f-nut-azuc'),
