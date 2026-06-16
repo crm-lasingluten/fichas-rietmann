@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fichas Técnicas — Rietmann Ibérica</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; background: #f4f4f4; color: #333; }
+header { background: white; border-bottom: 3px solid #c0392b; padding: 12px 24px; display: flex; align-items: center; }
+header img { height: 56px; }
+header .app-title { margin-left: auto; font-size: 13px; color: #888; }
+nav { background: #222; display: flex; }
+nav button { background: none; border: none; color: #aaa; padding: 12px 24px; cursor: pointer; font-size: 14px; transition: background 0.2s; }
+nav button.active, nav button:hover { color: white; background: #c0392b; }
+.container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+.card { background: white; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); padding: 24px; margin-bottom: 20px; }
+h2 { font-size: 18px; margin-bottom: 16px; color: #c0392b; border-bottom: 2px solid #c0392b; padding-bottom: 8px; }
+h3 { font-size: 12px; font-weight: bold; margin: 20px 0 10px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+label { display: block; font-size: 12px; color: #666; margin-bottom: 4px; }
+input[type=text], input[type=number], textarea, select {
+  width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; font-family: Arial;
+}
+input:focus, textarea:focus, select:focus { outline: none; border-color: #c0392b; }
+textarea { resize: vertical; min-height: 70px; }
+.field { margin-bottom: 12px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.btn { padding: 9px 18px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; transition: opacity 0.2s; }
+.btn:hover { opacity: 0.85; }
+.btn-primary { background: #c0392b; color: white; }
+.btn-secondary { background: #555; color: white; }
+.btn-danger { background: #e74c3c; color: white; }
+.btn-pdf { background: #2980b9; color: white; }
+.form-actions { display: flex; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid #eee; }
+.section-divider { border: none; border-top: 1px solid #eee; margin: 20px 0; }
+/* Tabla micro */
+.data-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+.data-table th { background: #f5f5f5; padding: 8px 10px; text-align: left; font-weight: bold; color: #555; border-bottom: 2px solid #ddd; }
+.data-table th.center { text-align: center; }
+.data-table td { padding: 7px 10px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+.data-table td input, .data-table td select { padding: 4px 6px; font-size: 12px; }
+/* Lista productos */
+.product-list { display: flex; flex-direction: column; gap: 10px; }
+.product-card { background: white; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #c0392b; }
+.product-card-info h4 { font-size: 15px; margin-bottom: 3px; }
+.product-card-info p { font-size: 12px; color: #888; }
+.product-card-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.empty-state { text-align: center; padding: 60px 20px; color: #bbb; }
+.empty-state svg { margin-bottom: 12px; }
+/* Alerts */
+.alert { padding: 12px 16px; border-radius: 4px; margin-bottom: 16px; font-size: 13px; display: none; }
+.alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+.loading { text-align: center; padding: 40px; color: #aaa; font-size: 14px; }
+.spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid #ddd; border-top-color: #c0392b; border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 8px; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<header>
+  <img src="logo.png" alt="Rietmann Ibérica" id="brand-logo">
+  <span class="app-title">Gestor de Fichas Técnicas</span>
+</header>
+
+<nav>
+  <button class="active" onclick="showView('list')" id="nav-list">📋 Productos</button>
+  <button onclick="showView('form', null)" id="nav-form">➕ Nuevo Producto</button>
+</nav>
+
+<div class="container">
+  <div id="alert-box" class="alert"></div>
+
+  <!-- VISTA: LISTA -->
+  <div id="view-list" style="display:none">
+    <div class="card">
+      <h2>Productos registrados</h2>
+      <div id="product-list"><div class="loading"><span class="spinner"></span>Cargando...</div></div>
+    </div>
+  </div>
+
+  <!-- VISTA: FORMULARIO -->
+  <div id="view-form" style="display:none">
+    <div class="card">
+      <h2 id="form-title">Nuevo Producto</h2>
+
+      <h3>Identificación</h3>
+      <div class="grid2">
+        <div class="field"><label>Nombre del producto *</label><input type="text" id="f-nombre"></div>
+        <div class="field"><label>Artículo No.</label><input type="text" id="f-articulo"></div>
+      </div>
+      <div class="field"><label>Descripción del producto</label><textarea id="f-descripcion" rows="3"></textarea></div>
+
+      <hr class="section-divider">
+      <h3>Sensorial</h3>
+      <div class="grid2">
+        <div class="field"><label>Apariencia / Consistencia</label><input type="text" id="f-apariencia"></div>
+        <div class="field"><label>Olor</label><input type="text" id="f-olor"></div>
+      </div>
+
+      <hr class="section-divider">
+      <h3>Ingredientes</h3>
+      <div class="field"><textarea id="f-ingredientes" rows="5" placeholder="Lista completa de ingredientes con porcentajes..."></textarea></div>
+
+      <hr class="section-divider">
+      <h3>Valores Nutricionales (por 100g premezcla)</h3>
+      <div class="grid3">
+        <div class="field"><label>Energía (kJ)</label><input type="number" id="f-nut-kj" step="0.1"></div>
+        <div class="field"><label>Energía (kcal)</label><input type="number" id="f-nut-kcal" step="0.1"></div>
+        <div class="field"><label>Grasa (g)</label><input type="number" id="f-nut-grasa" step="0.1"></div>
+        <div class="field"><label>de los cuales saturadas (g)</label><input type="number" id="f-nut-sat" step="0.1"></div>
+        <div class="field"><label>Carbohidratos (g)</label><input type="number" id="f-nut-carbs" step="0.1"></div>
+        <div class="field"><label>de los cuales azúcares (g)</label><input type="number" id="f-nut-azuc" step="0.1"></div>
+        <div class="field"><label>Fibra dietética (g)</label><input type="number" id="f-nut-fibra" step="0.1"></div>
+        <div class="field"><label>Proteína (g)</label><input type="number" id="f-nut-prot" step="0.1"></div>
+        <div class="field"><label>Sal (g)</label><input type="number" id="f-nut-sal" step="0.01"></div>
+      </div>
+
+      <hr class="section-divider">
+      <h3>Microbiología</h3>
+      <table class="data-table">
+        <thead><tr><th>Parámetro</th><th class="center">Valor Guía (ufc/g)</th><th class="center">Valor Crítico (ufc/g)</th></tr></thead>
+        <tbody id="micro-tbody"></tbody>
+      </table>
+
+      <hr class="section-divider">
+      <h3>Declaración de Alérgenos (EU-Reg 1169/2011)</h3>
+      <table class="data-table">
+        <thead><tr><th>Alérgeno</th><th class="center">Como ingrediente</th><th class="center">Contaminación cruzada</th></tr></thead>
+        <tbody id="alerg-tbody"></tbody>
+      </table>
+
+      <hr class="section-divider">
+      <h3>Información General</h3>
+      <div class="field"><label>Declaración OMG</label><textarea id="f-omg" rows="2"></textarea></div>
+      <div class="grid2">
+        <div class="field"><label>Almacenamiento</label><input type="text" id="f-almacenamiento"></div>
+        <div class="field"><label>Duración (vida útil)</label><input type="text" id="f-duracion"></div>
+      </div>
+      <div class="field"><label>Embalaje</label><textarea id="f-embalaje" rows="2"></textarea></div>
+      <div class="field"><label>Ley Alimentaria</label><textarea id="f-ley" rows="2"></textarea></div>
+      <div class="grid2">
+        <div class="field"><label>Certificación (URL)</label><input type="text" id="f-cert"></div>
+        <div class="field"><label>Versión</label><input type="text" id="f-version"></div>
+      </div>
+      <div class="field"><label>Comentarios / Misceláneas</label><textarea id="f-comentarios" rows="2"></textarea></div>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="saveProduct()">💾 Guardar producto</button>
+        <button class="btn btn-secondary" onclick="showView('list')">← Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPA_URL = 'https://lbbpnnvwtanurtjqgcqv.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxiYnBubnZ3dGFudXJ0anFnY3F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjM2NDEsImV4cCI6MjA5MjMzOTY0MX0';
+const TABLE = 'product_specs';
+let editingId = null;
+let LOGO_B64 = null;
+
+// Precarga logo para PDF
+window.addEventListener('load', () => {
+  const img = document.getElementById('brand-logo');
+  if (!img) return;
+  img.onload = () => {
+    try {
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth; c.height = img.naturalHeight;
+      c.getContext('2d').drawImage(img, 0, 0);
+      LOGO_B64 = c.toDataURL('image/png');
+    } catch(e) { LOGO_B64 = null; }
+  };
+  if (img.complete) img.onload();
+});
+
+const MICRO_ROWS = [
+  ['recuento_total', 'Recuento total de viables (30°C)', '1 000 000', '--------'],
+  ['ecoli', 'Escherichia coli', '10', '100'],
+  ['estafilococos', 'Coagulasa – estafilococos positivos', '100', '1 000'],
+  ['bacillus', 'Presunto Bacillus cereus', '100', '1 000'],
+  ['clostridium', 'Clostridium perfringens', '100', '1 000'],
+  ['salmonella', 'Salmonella', '------', 'no detectable en 25 g'],
+  ['moho', 'Moho', '10 000', '------'],
+];
+
+const ALERG_ROWS = [
+  ['gluten','Cereales que contienen gluten'],
+  ['trigo','-- Trigo'],['cebada','-- Cebada'],['centeno','-- Centeno'],
+  ['avena','-- Avena'],['espelta','-- Espelta'],['kamut','-- Kamut'],['hibridos','-- Híbridos'],
+  ['crustaceos','Crustáceos y productos derivados'],
+  ['huevos','Huevos y productos derivados'],
+  ['pescado','Pescado y productos derivados'],
+  ['cacahuetes','Cacahuetes y productos derivados'],
+  ['soja','Soja y productos derivados'],
+  ['leche','Leche y Productos derivados'],
+  ['nueces','Nueces y productos derivados'],
+  ['almendras','-- Almendras'],['avellanas','-- Avellanas'],['anacardos','-- Anacardos'],
+  ['nueces_pecan','-- Nueces de pecán'],['nueces_brasil','-- Nueces de Brasil'],
+  ['pistachos','-- Pistachos'],['macadamia','-- Macadamia o nueces de Queensland'],
+  ['apio','Apio y productos derivados'],
+  ['mostaza','Mostaza y sus productos'],
+  ['sesamo','Sésamo y productos derivados'],
+  ['sulfitos','Dióxido de azufre y sulfitos ≥10mg/Kg'],
+  ['altramuz','Altramuz y sus productos'],
+  ['moluscos','Moluscos y productos derivados'],
+];
+
+function selOpts(val) {
+  return ['NO','SI','<20 ppm'].map(o=>`<option${o===val?' selected':''}>${o}</option>`).join('');
+}
+
+function buildMicro(d) {
+  document.getElementById('micro-tbody').innerHTML = MICRO_ROWS.map(([k,label,dG,dC])=>{
+    const g = d?.['micro_'+k+'_guia'] ?? dG;
+    const c = d?.['micro_'+k+'_critico'] ?? dC;
+    return `<tr><td>${label}</td>
+      <td style="text-align:center"><input type="text" id="m-${k}-g" value="${g}" style="width:120px;text-align:center"></td>
+      <td style="text-align:center"><input type="text" id="m-${k}-c" value="${c}" style="width:160px;text-align:center"></td></tr>`;
+  }).join('');
+}
+
+function buildAlerg(d) {
+  document.getElementById('alerg-tbody').innerHTML = ALERG_ROWS.map(([k,label])=>{
+    const ing = d?.['alerg_'+k+'_ing'] ?? 'NO';
+    const cc  = d?.['alerg_'+k+'_cc']  ?? 'NO';
+    return `<tr><td>${label}</td>
+      <td style="text-align:center"><select id="a-${k}-i" style="width:90px">${selOpts(ing)}</select></td>
+      <td style="text-align:center"><select id="a-${k}-c" style="width:90px">${selOpts(cc)}</select></td></tr>`;
+  }).join('');
+}
+
+function showView(view, data) {
+  document.getElementById('view-list').style.display = 'none';
+  document.getElementById('view-form').style.display = 'none';
+  document.getElementById('nav-list').classList.remove('active');
+  document.getElementById('nav-form').classList.remove('active');
+
+  if (view === 'list') {
+    document.getElementById('view-list').style.display = 'block';
+    document.getElementById('nav-list').classList.add('active');
+    loadProducts();
+  } else {
+    document.getElementById('view-form').style.display = 'block';
+    document.getElementById('nav-form').classList.add('active');
+    editingId = data?.id ?? null;
+    document.getElementById('form-title').textContent = data ? 'Editar Producto' : 'Nuevo Producto';
+    fillForm(data);
+    buildMicro(data);
+    buildAlerg(data);
+    window.scrollTo(0,0);
+  }
+}
+
+function fillForm(d) {
+  const s = (id, v) => { const el = document.getElementById(id); if(el) el.value = v ?? ''; };
+  s('f-nombre', d?.nombre);
+  s('f-articulo', d?.articulo_no);
+  s('f-descripcion', d?.descripcion);
+  s('f-apariencia', d?.apariencia ?? 'polvo sin grumos');
+  s('f-olor', d?.olor ?? 'Nativo, libre de olores y sabores extraños.');
+  s('f-ingredientes', d?.ingredientes);
+  s('f-nut-kj', d?.nut_energia_kj);
+  s('f-nut-kcal', d?.nut_energia_kcal);
+  s('f-nut-grasa', d?.nut_grasa);
+  s('f-nut-sat', d?.nut_grasa_saturada);
+  s('f-nut-carbs', d?.nut_carbohidratos);
+  s('f-nut-azuc', d?.nut_azucares);
+  s('f-nut-fibra', d?.nut_fibra);
+  s('f-nut-prot', d?.nut_proteina);
+  s('f-nut-sal', d?.nut_sal);
+  s('f-omg', d?.declaracion_omg ?? 'El producto no contiene ni consiste en OGM, no se produce ni contiene ingredientes producidos a partir de OGM. El producto no tiene que estar etiquetado según los Reglamentos CE/1829/2003 y CE/1830/2003.');
+  s('f-almacenamiento', d?.almacenamiento ?? 'Almacenamiento fresco y seco');
+  s('f-duracion', d?.duracion ?? '15 meses');
+  s('f-embalaje', d?.embalaje);
+  s('f-ley', d?.ley_alimentaria ?? 'El producto cumple con las normas de la República Federal de Alemania y las respectivas directrices y reglamentos de la CE.');
+  s('f-cert', d?.certificacion ?? 'http://www.rietmann.de/en/certificates');
+  s('f-version', d?.version);
+  s('f-comentarios', d?.comentarios);
+}
+
+function getFormData() {
+  const v = id => document.getElementById(id)?.value?.trim() || null;
+  const n = id => { const val = parseFloat(document.getElementById(id)?.value); return isNaN(val) ? null : val; };
+  const data = {
+    nombre: v('f-nombre'), articulo_no: v('f-articulo'), descripcion: v('f-descripcion'),
+    apariencia: v('f-apariencia'), olor: v('f-olor'), ingredientes: v('f-ingredientes'),
+    nut_energia_kj: n('f-nut-kj'), nut_energia_kcal: n('f-nut-kcal'),
+    nut_grasa: n('f-nut-grasa'), nut_grasa_saturada: n('f-nut-sat'),
+    nut_carbohidratos: n('f-nut-carbs'), nut_azucares: n('f-nut-azuc'),
+    nut_fibra: n('f-nut-fibra'), nut_proteina: n('f-nut-prot'), nut_sal: n('f-nut-sal'),
+    declaracion_omg: v('f-omg'), almacenamiento: v('f-almacenamiento'),
+    duracion: v('f-duracion'), embalaje: v('f-embalaje'),
+    ley_alimentaria: v('f-ley'), certificacion: v('f-cert'),
+    version: v('f-version'), comentarios: v('f-comentarios'),
+  };
+  MICRO_ROWS.forEach(([k]) => {
+    data['micro_'+k+'_guia']    = document.getElementById('m-'+k+'-g')?.value || null;
+    data['micro_'+k+'_critico'] = document.getElementById('m-'+k+'-c')?.value || null;
+  });
+  ALERG_ROWS.forEach(([k]) => {
+    data['alerg_'+k+'_ing'] = document.getElementById('a-'+k+'-i')?.value || 'NO';
+    data['alerg_'+k+'_cc']  = document.getElementById('a-'+k+'-c')?.value || 'NO';
+  });
+  return data;
+}
+
+async function api(method, path, body) {
+  const res = await fetch(SUPA_URL+'/rest/v1/'+path, {
+    method,
+    headers: {
+      'apikey': SUPA_KEY, 'Authorization': 'Bearer '+SUPA_KEY,
+      'Content-Type': 'application/json', 'Prefer': 'return=representation'
+    },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (!res.ok) throw new Error(await res.text());
+  const txt = await res.text();
+  return txt ? JSON.parse(txt) : [];
+}
+
+async function loadProducts() {
+  const el = document.getElementById('product-list');
+  el.innerHTML = '<div class="loading"><span class="spinner"></span>Cargando productos...</div>';
+  try {
+    const data = await api('GET', TABLE+'?select=id,nombre,articulo_no,descripcion,version&order=created_at.desc');
+    if (!data.length) {
+      el.innerHTML = '<div class="empty-state"><p style="font-size:15px">No hay productos registrados.</p><p style="margin-top:8px;font-size:13px">Pulsa "Nuevo Producto" para empezar.</p></div>';
+      return;
+    }
+    el.innerHTML = '<div class="product-list">'+data.map(p=>`
+      <div class="product-card">
+        <div class="product-card-info">
+          <h4>${p.nombre}</h4>
+          <p>Art. ${p.articulo_no||'—'} &nbsp;·&nbsp; ${p.version||'Sin versión'}</p>
+          ${p.descripcion ? `<p style="margin-top:4px;max-width:500px">${p.descripcion.substring(0,90)}${p.descripcion.length>90?'...':''}</p>` : ''}
+        </div>
+        <div class="product-card-actions">
+          <button class="btn btn-secondary" onclick="editProduct('${p.id}')">✏️ Editar</button>
+          <button class="btn btn-pdf" onclick="generatePDF('${p.id}')">📄 PDF</button>
+          <button class="btn btn-danger" onclick="deleteProduct('${p.id}')">🗑️</button>
+        </div>
+      </div>`).join('')+'</div>';
+  } catch(e) { el.innerHTML = `<div class="alert alert-error" style="display:block">Error: ${e.message}</div>`; }
+}
+
+async function saveProduct() {
+  const data = getFormData();
+  if (!data.nombre) { showAlert('El nombre del producto es obligatorio.','error'); return; }
+  try {
+    if (editingId) {
+      await api('PATCH', TABLE+'?id=eq.'+editingId, data);
+    } else {
+      await api('POST', TABLE, data);
+    }
+    showAlert('Producto guardado correctamente.','success');
+    setTimeout(() => showView('list'), 1200);
+  } catch(e) { showAlert('Error al guardar: '+e.message,'error'); }
+}
+
+async function editProduct(id) {
+  try {
+    const rows = await api('GET', TABLE+'?id=eq.'+id);
+    showView('form', rows[0]);
+  } catch(e) { showAlert('Error cargando producto: '+e.message,'error'); }
+}
+
+async function deleteProduct(id) {
+  if (!confirm('¿Eliminar este producto? Esta acción no se puede deshacer.')) return;
+  try {
+    await api('DELETE', TABLE+'?id=eq.'+id);
+    showAlert('Producto eliminado.','success');
+    loadProducts();
+  } catch(e) { showAlert('Error: '+e.message,'error'); }
+}
+
+function showAlert(msg, type) {
+  const el = document.getElementById('alert-box');
+  el.className = 'alert alert-'+type;
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+// ===================== GENERADOR PDF =====================
+async function generatePDF(id) {
+  try {
+    const rows = await api('GET', TABLE+'?id=eq.'+id);
+    const d = rows[0];
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const W = 210, mg = 18, RW = W - 2*mg;
+    let y = 0;
+
+    function newPage() { doc.addPage(); y = 0; drawPageHeader(); }
+    function check(h) { if (y + h > 272) newPage(); }
+
+    function drawPageHeader() {
+      // Franja lateral roja
+      doc.setFillColor(192,57,43);
+      doc.rect(0, 0, 7, 297, 'F');
+      // Logo
+      if (LOGO_B64) {
+        doc.addImage(LOGO_B64, 'PNG', W-52, 6, 34, 22);
+      } else {
+        doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(192,57,43);
+        doc.text('RIETMANN', W-mg, 12, {align:'right'});
+        doc.setFontSize(7); doc.setTextColor(100,100,100);
+        doc.text('I B É R I C A', W-mg, 17, {align:'right'});
+      }
+      // Subtítulo ficha
+      doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
+      doc.text('Producto Especificación', mg, 12);
+      doc.setFontSize(13); doc.setFont('helvetica','bold'); doc.setTextColor(20,20,20);
+      doc.text(d.nombre||'', mg, 20);
+      doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
+      doc.text('Artículo No.: '+(d.articulo_no||''), mg, 26);
+      doc.setDrawColor(192,57,43); doc.setLineWidth(0.4);
+      doc.line(mg, 30, W-mg, 30);
+      y = 36;
+    }
+
+    function secTitle(t) {
+      check(14);
+      doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(30,30,30);
+      doc.text(t, mg, y); y += 6;
+    }
+
+    function para(text, indent) {
+      if (!text) return;
+      const x = mg+(indent||0);
+      doc.setFontSize(8.5); doc.setFont('helvetica','normal'); doc.setTextColor(60,60,60);
+      const lines = doc.splitTextToSize(text, RW-(indent||0));
+      check(lines.length*5+2);
+      doc.text(lines, x, y);
+      y += lines.length*5+3;
+    }
+
+    function row2(label, value) {
+      check(8);
+      doc.setFontSize(8.5); doc.setFont('helvetica','bold'); doc.setTextColor(60,60,60);
+      doc.text(label+':', mg, y);
+      doc.setFont('helvetica','normal');
+      const lines = doc.splitTextToSize(value||'—', RW-52);
+      doc.text(lines, mg+52, y);
+      y += Math.max(lines.length*5, 6);
+    }
+
+    function tableHeader(cols, widths) {
+      check(10);
+      doc.setFillColor(235,235,235);
+      doc.rect(mg, y-4, RW, 8, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(40,40,40);
+      let x = mg+2;
+      cols.forEach((c,i) => { doc.text(c, x, y); x += widths[i]; });
+      y += 5;
+      doc.setDrawColor(200,200,200); doc.setLineWidth(0.3);
+      doc.line(mg, y-1, W-mg, y-1);
+    }
+
+    // ---- PÁGINA 1 ----
+    drawPageHeader();
+
+    secTitle('Descripción del Producto:');
+    para(d.descripcion);
+    y += 3;
+
+    secTitle('SENSORIAL');
+    row2('Apariencia, Consistencia', d.apariencia);
+    row2('Olor', d.olor);
+    y += 3;
+
+    secTitle('Dosis recomendada / Receta para hornear');
+    y += 2;
+    secTitle('Ingredientes:');
+    para(d.ingredientes);
+
+    // ---- PÁGINA 2: Nutricional + Micro ----
+    newPage();
+    secTitle('Valores Nutricionales por 100 g Premezcla calculado');
+    const nutData = [
+      ['Energía:', (d.nut_energia_kj||'')+'kJ'],
+      ['Calorías (kcal):', (d.nut_energia_kcal||'')+' kcal'],
+      ['Grasa:', (d.nut_grasa||'')+'g'],
+      ['de los cuales saturados:', (d.nut_grasa_saturada||'')+'g'],
+      ['Carbohidratos:', (d.nut_carbohidratos||'')+'g'],
+      ['de los cuales azúcares:', (d.nut_azucares||'')+'g'],
+      ['Fibra dietética:', (d.nut_fibra||'')+'g'],
+      ['Proteína:', (d.nut_proteina||'')+'g'],
+      ['Sal (sodio*2,5):', (d.nut_sal||'')+'g'],
+    ];
+    nutData.forEach(([l,v]) => row2(l,v));
+    doc.setFontSize(7.5); doc.setFont('helvetica','italic'); doc.setTextColor(120,120,120);
+    doc.text('Los valores nutricionales están sujetos a las variaciones típicas de los productos naturales.', mg, y);
+    y += 10;
+
+    secTitle('Microbiología');
+    para('En el sentido comercial convencional, el producto está libre de microorganismos patógenos y cumple con el Reglamento Europeo de Aflatoxinas.');
+    y += 2;
+    tableHeader(['Parámetro','Valor Guía (ufc/g)','Valor Crítico (ufc/g)'],[80,40,40]);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(50,50,50);
+    MICRO_ROWS.forEach(([k,label]) => {
+      check(7);
+      doc.setDrawColor(220,220,220); doc.line(mg, y-3, W-mg, y-3);
+      doc.text(label, mg+2, y);
+      doc.text(d['micro_'+k+'_guia']||'', mg+82, y, {align:'center'});
+      doc.text(d['micro_'+k+'_critico']||'', mg+122, y, {align:'center'});
+      y += 7;
+    });
+
+    // ---- PÁGINA 3: Alérgenos ----
+    newPage();
+    secTitle('Declaración de Alérgenos (según EU-Reg 1169/2011)');
+    tableHeader(['Alérgeno','Como ingrediente','Posible contaminación cruzada'],[90,40,50]);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(50,50,50);
+    ALERG_ROWS.forEach(([k,label]) => {
+      check(7);
+      doc.setDrawColor(220,220,220); doc.line(mg, y-3, W-mg, y-3);
+      doc.text(label, mg+2, y);
+      doc.text(d['alerg_'+k+'_ing']||'NO', mg+92, y, {align:'center'});
+      doc.text(d['alerg_'+k+'_cc']||'NO', mg+132, y, {align:'center'});
+      y += 7;
+    });
+    y += 4;
+    doc.setFontSize(7); doc.setFont('helvetica','italic'); doc.setTextColor(120,120,120);
+    const nota = 'Tenga en cuenta que la lista de contaminantes cruzados mencionada anteriormente es una indicación de posibles rastros alergénicos que ingresan a través de nuestras líneas de producción. Se basa en información actual y se revisa periódicamente.';
+    const notaLines = doc.splitTextToSize(nota, RW);
+    check(notaLines.length*4+2);
+    doc.text(notaLines, mg, y);
+    y += notaLines.length*4+4;
+
+    // ---- PÁGINA 4: Info General ----
+    newPage();
+    secTitle('Información General');
+    row2('Declaración OMG', d.declaracion_omg);
+    row2('Almacenamiento', d.almacenamiento);
+    row2('Duración', d.duracion);
+    row2('Embalaje', d.embalaje);
+    row2('Ley Alimentaria', d.ley_alimentaria);
+    row2('Certificación', d.certificacion);
+    if (d.comentarios) row2('Comentarios', d.comentarios);
+    y += 4;
+    row2('Versión', d.version);
+
+    // ---- PIE DE PÁGINA en todas las páginas ----
+    const total = doc.getNumberOfPages();
+    for (let i=1; i<=total; i++) {
+      doc.setPage(i);
+      doc.setDrawColor(200,200,200); doc.setLineWidth(0.3);
+      doc.line(mg, 280, W-mg, 280);
+      doc.setFontSize(7.5); doc.setFont('helvetica','bold'); doc.setTextColor(80,80,80);
+      doc.text('Rietmann Ibérica', mg, 285);
+      doc.setFont('helvetica','normal'); doc.setTextColor(120,120,120);
+      doc.text('info@rietmanniberica.com  ·  +34 931 592 650', mg, 289);
+      doc.text('Documento EDP, válido sin firma.  ID Artículo: '+(d.articulo_no||''), mg, 293);
+      doc.text(i+'/'+total, W-mg, 289, {align:'right'});
+    }
+
+    doc.save((d.nombre||'ficha').replace(/\s+/g,'_')+'_FichaTecnica.pdf');
+    showAlert('PDF generado correctamente.','success');
+  } catch(e) { showAlert('Error generando PDF: '+e.message,'error'); }
+}
+
+// Init
+showView('list');
+</script>
+</body>
+</html>
