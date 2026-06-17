@@ -129,11 +129,20 @@ textarea { resize: vertical; min-height: 70px; }
       <h2 id="form-title">Nuevo Producto</h2>
 
       <h3>Identificación</h3>
-      <div class="grid2">
-        <div class="field"><label>Nombre del producto *</label><input type="text" id="f-nombre"></div>
-        <div class="field"><label>Artículo No.</label><input type="text" id="f-articulo"></div>
+      <div class="lang-tabs">
+        <button class="lang-tab active" onclick="switchLangTab(this,'id')">🇪🇸 ES</button>
+        <button class="lang-tab" onclick="switchLangTab(this,'id')">🇬🇧 EN</button>
       </div>
-      <div class="field">
+      <div class="lang-panel active" id="id-es">
+        <div class="grid2">
+          <div class="field"><label>Nombre del producto *</label><input type="text" id="f-nombre"></div>
+          <div class="field"><label>Artículo No.</label><input type="text" id="f-articulo"></div>
+        </div>
+      </div>
+      <div class="lang-panel" id="id-en">
+        <div class="field"><label>Product name (English)</label><input type="text" id="f-nombre-en"></div>
+      </div>
+      <div class="field" style="margin-top:12px">
         <label>Tipo de mezcla</label>
         <select id="f-tipo-mezcla">
           <option value="">-- Seleccionar --</option>
@@ -358,13 +367,17 @@ var ALERG_ROWS_EN = [
 ];
 
 function switchLangTab(btn, group) {
-  var tabs = btn.parentElement.querySelectorAll('.lang-tab');
+  var parent = btn.parentElement;
+  var tabs = parent.querySelectorAll('.lang-tab');
   var idx = Array.prototype.indexOf.call(tabs, btn);
   tabs.forEach(function(t) { t.classList.remove('active'); });
   btn.classList.add('active');
-  var panels = [document.getElementById(group+'-es'), document.getElementById(group+'-en')];
-  panels.forEach(function(p) { if(p) p.classList.remove('active'); });
-  if (panels[idx]) panels[idx].classList.add('active');
+  var esPanel = document.getElementById(group+'-es');
+  var enPanel = document.getElementById(group+'-en');
+  if (esPanel) esPanel.classList.remove('active');
+  if (enPanel) enPanel.classList.remove('active');
+  if (idx === 0 && esPanel) esPanel.classList.add('active');
+  if (idx === 1 && enPanel) enPanel.classList.add('active');
 }
 
 function toggleBold(elId) {
@@ -442,6 +455,7 @@ function showView(view, data) {
 function fillForm(d) {
   var s = function(id,v) { var el=document.getElementById(id); if(el) el.value=(v!=null)?v:''; };
   s('f-nombre', d&&d.nombre);
+  s('f-nombre-en', d&&d.nombre_en);
   s('f-articulo', d&&d.articulo_no);
   var tm = document.getElementById('f-tipo-mezcla');
   if (tm) tm.value = (d&&d.tipo_mezcla) ? d.tipo_mezcla : '';
@@ -484,7 +498,7 @@ function getFormData() {
   var v = function(id) { var el=document.getElementById(id); return el&&el.value.trim()?el.value.trim():null; };
   var n = function(id) { var val=parseFloat(document.getElementById(id)?document.getElementById(id).value:''); return isNaN(val)?null:val; };
   var data = {
-    nombre:v('f-nombre'), articulo_no:v('f-articulo'),
+    nombre:v('f-nombre'), nombre_en:v('f-nombre-en'), articulo_no:v('f-articulo'),
     tipo_mezcla:(document.getElementById('f-tipo-mezcla')&&document.getElementById('f-tipo-mezcla').value)||null,
     descripcion:v('f-descripcion'), descripcion_en:v('f-descripcion-en'),
     apariencia:v('f-apariencia'), apariencia_en:v('f-apariencia-en'),
@@ -668,7 +682,8 @@ function generatePDF(id, lang) {
       doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(100,100,100);
       doc.text(T.prodSpec,mg,12);
       doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(20,20,20);
-      doc.text(d.nombre||'',mg,20);
+      var pdfNombre = (isEN && d.nombre_en) ? d.nombre_en : d.nombre;
+      doc.text(pdfNombre||'',mg,20);
       doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(80,80,80);
       doc.text(T.artNo+(d.articulo_no||''),mg,26);
       doc.setDrawColor(192,57,43);doc.setLineWidth(0.4);doc.line(mg,30,W-mg,30);
