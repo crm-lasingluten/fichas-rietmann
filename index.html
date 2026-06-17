@@ -87,6 +87,30 @@ textarea { resize: vertical; min-height: 70px; }
   <div id="view-list" style="display:none">
     <div class="card">
       <h2>Productos registrados</h2>
+
+      <!-- Filtros -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
+        <div>
+          <label>Tipo de mezcla</label>
+          <select id="filtro-tipo" onchange="loadProducts()">
+            <option value="">Todos</option>
+            <option>MEZCLAS PROTEICAS Y BAJAS EN CARBOHIDRATOS</option>
+            <option>PRE MEZCLAS CONVENCIONALES</option>
+            <option>OTROS PRODUCTOS DE LA GAMA PROTEICAS</option>
+            <option>PRE MEZCLAS SIN GLUTEN</option>
+            <option>LINEA NAVIDENA</option>
+          </select>
+        </div>
+        <div>
+          <label>Código</label>
+          <input type="text" id="filtro-codigo" placeholder="Ej: 0039201" oninput="loadProducts()">
+        </div>
+        <div>
+          <label>Nombre</label>
+          <input type="text" id="filtro-nombre" placeholder="Buscar por nombre..." oninput="loadProducts()">
+        </div>
+      </div>
+
       <div id="product-list"><p style="color:#888;font-size:14px">Cargando...</p></div>
     </div>
   </div>
@@ -99,6 +123,17 @@ textarea { resize: vertical; min-height: 70px; }
       <div class="grid2">
         <div class="field"><label>Nombre del producto *</label><input type="text" id="f-nombre"></div>
         <div class="field"><label>Artículo No.</label><input type="text" id="f-articulo"></div>
+      </div>
+      <div class="field">
+        <label>Tipo de mezcla</label>
+        <select id="f-tipo-mezcla">
+          <option value="">-- Seleccionar --</option>
+          <option>MEZCLAS PROTEICAS Y BAJAS EN CARBOHIDRATOS</option>
+          <option>PRE MEZCLAS CONVENCIONALES</option>
+          <option>OTROS PRODUCTOS DE LA GAMA PROTEICAS</option>
+          <option>PRE MEZCLAS SIN GLUTEN</option>
+          <option>LINEA NAVIDENA</option>
+        </select>
       </div>
       <div class="field"><label>Descripción del producto</label><textarea id="f-descripcion" rows="3"></textarea></div>
 
@@ -270,7 +305,30 @@ var ALERG_ROWS_EN = [
   ['moluscos','Molluscs and products thereof'],
 ];
 
-function selOpts(val) {
+function toggleBold() {
+  document.getElementById('f-ingredientes').focus();
+  document.execCommand('bold');
+  syncIngredientes();
+}
+
+function syncIngredientes() {
+  var el = document.getElementById('f-ingredientes');
+  var raw = el.innerHTML
+    .replace(/<b>(.*?)<\/b>/gi, '**$1**')
+    .replace(/<strong>(.*?)<\/strong>/gi, '**$1**')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&nbsp;/g,' ');
+  document.getElementById('f-ingredientes-raw').value = raw;
+}
+
+function setIngredientesHTML(raw) {
+  if (!raw) { document.getElementById('f-ingredientes').innerHTML = ''; return; }
+  var html = raw.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+  document.getElementById('f-ingredientes').innerHTML = html;
+  syncIngredientes();
+}
+
+
   return ['NO','SI','<20 ppm'].map(function(o) { return '<option' + (o === val ? ' selected' : '') + '>' + o + '</option>'; }).join('');
 }
 
@@ -321,11 +379,13 @@ function fillForm(d) {
   var s = function(id, v) { var el = document.getElementById(id); if(el) el.value = (v != null) ? v : ''; };
   s('f-nombre', d && d.nombre);
   s('f-articulo', d && d.articulo_no);
+  var tm = document.getElementById('f-tipo-mezcla');
+  if (tm) tm.value = (d && d.tipo_mezcla) ? d.tipo_mezcla : '';
   s('f-descripcion', d && d.descripcion);
   s('f-apariencia', d && d.apariencia ? d.apariencia : '');
   s('f-olor', d && d.olor ? d.olor : '');
   s('f-dosis', d && d.dosis_receta);
-  s('f-ingredientes', d && d.ingredientes);
+  setIngredientesHTML(d && d.ingredientes);
   s('f-nut-kj', d && d.nut_energia_kj); s('f-nut-kcal', d && d.nut_energia_kcal);
   s('f-nut-grasa', d && d.nut_grasa); s('f-nut-sat', d && d.nut_grasa_saturada);
   s('f-nut-carbs', d && d.nut_carbohidratos); s('f-nut-azuc', d && d.nut_azucares);
@@ -349,9 +409,11 @@ function getFormData() {
   var v = function(id) { var el = document.getElementById(id); return el && el.value.trim() ? el.value.trim() : null; };
   var n = function(id) { var val = parseFloat(document.getElementById(id) ? document.getElementById(id).value : ''); return isNaN(val) ? null : val; };
   var data = {
-    nombre: v('f-nombre'), articulo_no: v('f-articulo'), descripcion: v('f-descripcion'),
+    nombre: v('f-nombre'), articulo_no: v('f-articulo'),
+    tipo_mezcla: (document.getElementById('f-tipo-mezcla') && document.getElementById('f-tipo-mezcla').value) || null,
+    descripcion: v('f-descripcion'),
     apariencia: v('f-apariencia'), olor: v('f-olor'), dosis_receta: v('f-dosis'),
-    ingredientes: v('f-ingredientes'),
+    ingredientes: document.getElementById('f-ingredientes-raw').value || null,
     nut_energia_kj: n('f-nut-kj'), nut_energia_kcal: n('f-nut-kcal'),
     nut_grasa: n('f-nut-grasa'), nut_grasa_saturada: n('f-nut-sat'),
     nut_carbohidratos: n('f-nut-carbs'), nut_azucares: n('f-nut-azuc'),
@@ -398,16 +460,27 @@ function api(method, path, body) {
 function loadProducts() {
   var el = document.getElementById('product-list');
   el.innerHTML = '<p style="color:#888;font-size:14px">Cargando...</p>';
-  api('GET', TABLE + '?select=id,nombre,articulo_no,descripcion,version&order=created_at.desc').then(function(data) {
+
+  var tipo = document.getElementById('filtro-tipo') ? document.getElementById('filtro-tipo').value : '';
+  var codigo = document.getElementById('filtro-codigo') ? document.getElementById('filtro-codigo').value.trim() : '';
+  var nombre = document.getElementById('filtro-nombre') ? document.getElementById('filtro-nombre').value.trim() : '';
+
+  var query = TABLE + '?select=id,nombre,articulo_no,descripcion,version,tipo_mezcla&order=nombre.asc';
+  if (tipo) query += '&tipo_mezcla=eq.' + encodeURIComponent(tipo);
+  if (codigo) query += '&articulo_no=ilike.*' + encodeURIComponent(codigo) + '*';
+  if (nombre) query += '&nombre=ilike.*' + encodeURIComponent(nombre) + '*';
+
+  api('GET', query).then(function(data) {
     if (!data.length) {
-      el.innerHTML = '<div class="empty-state">No hay productos registrados. Pulsa "Nuevo Producto" para empezar.</div>';
+      el.innerHTML = '<div class="empty-state">No se encontraron productos con esos filtros.</div>';
       return;
     }
     el.innerHTML = '<div class="product-list">' + data.map(function(p) {
       return '<div class="product-card">' +
         '<div class="product-card-info">' +
         '<h4>' + (p.nombre || '') + '</h4>' +
-        '<p>Art. ' + (p.articulo_no || '') + ' &nbsp;·&nbsp; ' + (p.version || 'Sin version') + '</p>' +
+        '<p>Art. ' + (p.articulo_no || '') + ' &nbsp;·&nbsp; ' + (p.version || 'Sin version') +
+        (p.tipo_mezcla ? ' &nbsp;·&nbsp; <span style="color:#c0392b;font-weight:bold">' + p.tipo_mezcla + '</span>' : '') + '</p>' +
         (p.descripcion ? '<p style="margin-top:4px;max-width:500px">' + p.descripcion.substring(0,90) + (p.descripcion.length > 90 ? '...' : '') + '</p>' : '') +
         '</div>' +
         '<div class="product-card-actions">' +
