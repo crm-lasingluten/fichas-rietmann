@@ -329,6 +329,7 @@ function setIngredientesHTML(raw) {
 }
 
 
+function selOpts(val) {
   return ['NO','SI','<20 ppm'].map(function(o) { return '<option' + (o === val ? ' selected' : '') + '>' + o + '</option>'; }).join('');
 }
 
