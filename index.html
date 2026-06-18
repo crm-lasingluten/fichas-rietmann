@@ -626,8 +626,14 @@ function askPrint(id) { pendingPdfId=id; pendingPrintMode='print'; document.getE
 function askLang(id)  { askPDF(id); }
 function confirmLang(lang) {
   document.getElementById('lang-modal').classList.remove('open');
-  if (pendingPrintMode==='print') { loadAndPrint(pendingPdfId, lang); }
-  else { generatePDF(pendingPdfId, lang); }
+  if (pendingRecetaId) {
+    var rid = pendingRecetaId; pendingRecetaId = null;
+    printReceta(rid, lang);
+  } else if (pendingPrintMode==='print') {
+    loadAndPrint(pendingPdfId, lang);
+  } else {
+    generatePDF(pendingPdfId, lang);
+  }
 }
 function confirmPDF(lang) { confirmLang(lang); }
 
