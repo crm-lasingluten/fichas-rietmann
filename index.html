@@ -1033,7 +1033,7 @@ function loadRecetas() {
           '<p>'+r.articulo_no+(resumen?' · '+resumen:'')+'</p>'+
         '</div>'+
         '<div class="product-card-actions">'+
-          '<button class="btn btn-pdf" onclick="askRecetaPrint(''+r.id+'')">Imprimir</button>'+
+          '<button class="btn btn-pdf" onclick="askRecetaPrint('+"'"+r.id+"'"+')">Imprimir</button>'+
         '</div>'+
       '</div>';
     }).join('')+'</div>';
@@ -1056,8 +1056,7 @@ function printReceta(id, lang) {
     var d = rows[0]; if (!d) return;
     var es = (lang==='es');
     var nombre = (es ? d.nombre : (d.nombre_en||d.nombre)) || '';
-    var ing    = ((es ? d.ingredientes : (d.ingredientes_en||d.ingredientes)) || '').replace(/
-/g,'<br>');
+    var ing    = ((es ? d.ingredientes : (d.ingredientes_en||d.ingredientes)) || '').replace(/\n/g,'<br>');
     var pasos  = (es ? d.pasos : (d.pasos_en||d.pasos)) || [];
     var notas  = (es ? d.notas : (d.notas_en||d.notas)) || '';
     var pasosHTML = pasos.map(function(p){
