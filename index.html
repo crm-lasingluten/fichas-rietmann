@@ -629,6 +629,9 @@ function confirmLang(lang) {
   if (pendingRecetaId) {
     var rid = pendingRecetaId; pendingRecetaId = null;
     printReceta(rid, lang);
+  } else if (pendingRecetaPDFId) {
+    var rid2 = pendingRecetaPDFId; pendingRecetaPDFId = null;
+    generateRecetaPDF(rid2, lang);
   } else if (pendingPrintMode==='print') {
     loadAndPrint(pendingPdfId, lang);
   } else {
@@ -702,7 +705,7 @@ function generatePrintHTML(d, lang) {
   if(d.nut_proteina)       nutRows += '<tr><td>'+(es?'Proteína':'Protein')+'</td><td>'+d.nut_proteina+' g</td></tr>';
   if(d.nut_sal)            nutRows += '<tr><td>Sal / Salt</td><td>'+d.nut_sal+' g</td></tr>';
 
-  var btnImprimir = '<div style="text-align:right;margin-bottom:16px"><button onclick="window.print()" style="background:#c0392b;color:#fff;border:none;padding:8px 20px;font-size:13px;border-radius:4px;cursor:pointer;">🖨️ '+(es?'Imprimir':'Print')+'</button></div>';
+  var btnImprimir = '<div style="text-align:right;margin-bottom:16px"><button onclick="window.print()" style="background:#c0392b;color:#fff;border:none;padding:8px 20px;font-size:13px;border-radius:4px;cursor:pointer;"> '+(es?'Imprimir':'Print')+'</button></div>';
 
   return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+nombre+'</title>'+
   '<style>'+
@@ -1030,18 +1033,20 @@ function loadRecetas() {
   .then(function(r){ return r.json(); })
   .then(function(rows){
     if (!rows||!rows.length) { el.innerHTML='<div class="empty-state">No hay registros.</div>'; return; }
-    el.innerHTML = '<div class="product-list">'+rows.map(function(r){
-      var pasos = r.pasos || [];
-      var resumen = pasos.map(function(p){ return p.titulo; }).join(' → ');
-      return '<div class="product-card">'+
-        '<div class="product-card-info">'+
-          '<h4>'+r.nombre+'</h4>'+
-          '<p>'+r.articulo_no+(resumen?' · '+resumen:'')+'</p>'+
-        '</div>'+
-        '<div class="product-card-actions">'+
-          '<button class="btn btn-pdf" onclick="askRecetaPrint('+"'"+r.id+"'"+')">Imprimir</button>'+
-        '</div>'+
-      '</div>';
+    el.innerHTML = '<div class="product-list">'+rows.map(function(rec){
+      var pasos = rec.pasos || [];
+      var resumen = pasos.map(function(p){ return p.titulo; }).join(' > ');
+      var rid = rec.id;
+      return '<div class="product-card">'
+        +'<div class="product-card-info">'
+          +'<h4>'+rec.nombre+'</h4>'
+          +'<p>'+rec.articulo_no+(resumen?' · '+resumen:'')+'</p>'
+        +'</div>'
+        +'<div class="product-card-actions">'
+          +'<button class="btn btn-pdf" onclick="askRecetaPDF(\''+rid+'\')">PDF</button>'
+          +'<button class="btn btn-secondary" onclick="askRecetaPrint(\''+rid+'\')">Imprimir</button>'
+        +'</div>'
+        +'</div>';
     }).join('')+'</div>';
   })
   .catch(function(e){ el.innerHTML='<div class="alert alert-error">Error: '+e.message+'</div>'; });
@@ -1086,6 +1091,108 @@ function printReceta(id, lang) {
     setTimeout(function(){ w.print(); }, 700);
   })
   .catch(function(e){ showAlert('Error: '+e.message,'error'); });
+}
+
+var pendingRecetaPDFId = null;
+function askRecetaPDF(id) {
+  pendingRecetaPDFId = id;
+  pendingRecetaId = null;
+  document.getElementById('lang-modal').classList.add('open');
+}
+
+function generateRecetaPDF(id, lang) {
+  fetch(SUPA_URL+'/rest/v1/recipes?id=eq.'+id, {
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(rows){
+    var d = rows[0]; if (!d) { showAlert('No encontrado','error'); return; }
+    var es = (lang==='es');
+    var jsPDF = window.jspdf.jsPDF;
+    var doc = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
+    var red = [192,57,43];
+    var gray = [100,100,100];
+    var dark = [34,34,34];
+    var W = 210, ml = 15, mr = 15, cw = W-ml-mr;
+    var y = 15;
+
+    // Título
+    var nombre = (es ? d.nombre : (d.nombre_en||d.nombre)) || '';
+    doc.setFontSize(18); doc.setTextColor(red[0],red[1],red[2]); doc.setFont('helvetica','bold');
+    doc.text(nombre, ml, y); y += 8;
+
+    // Badge tipo
+    var badge = d.tipo==='paso_a_paso' ? (es?'Paso a Paso':'Step by Step') : (es?'Receta':'Recipe');
+    doc.setFontSize(9); doc.setTextColor(255,255,255);
+    var bw = doc.getTextWidth(badge)+6;
+    doc.setFillColor(red[0],red[1],red[2]);
+    doc.roundedRect(ml, y-4, bw, 6, 1, 1, 'F');
+    doc.text(badge, ml+3, y); y += 6;
+
+    // Artículo
+    doc.setFontSize(9); doc.setTextColor(gray[0],gray[1],gray[2]); doc.setFont('helvetica','normal');
+    doc.text('Art. '+d.articulo_no, ml, y); y += 8;
+
+    // Línea roja
+    doc.setDrawColor(red[0],red[1],red[2]); doc.setLineWidth(0.5);
+    doc.line(ml, y, W-mr, y); y += 6;
+
+    function sectionTitle(txt) {
+      doc.setFontSize(10); doc.setTextColor(red[0],red[1],red[2]); doc.setFont('helvetica','bold');
+      doc.text(txt.toUpperCase(), ml, y); y += 1;
+      doc.setDrawColor(220,220,220); doc.setLineWidth(0.3);
+      doc.line(ml, y+1, W-mr, y+1); y += 5;
+    }
+
+    function addText(txt, size) {
+      size = size || 10;
+      doc.setFontSize(size); doc.setTextColor(dark[0],dark[1],dark[2]); doc.setFont('helvetica','normal');
+      var lines = doc.splitTextToSize(txt, cw);
+      lines.forEach(function(l) {
+        if (y > 270) { doc.addPage(); y = 15; }
+        doc.text(l, ml, y); y += size*0.45;
+      });
+      y += 3;
+    }
+
+    // Ingredientes
+    var ing = (es ? d.ingredientes : (d.ingredientes_en||d.ingredientes)) || '';
+    if (ing) {
+      sectionTitle(es?'Ingredientes':'Ingredients');
+      ing = ing.replace(/\*\*(.*?)\*\*/g,'$1');
+      addText(ing);
+    }
+
+    // Pasos
+    var pasos = (es ? d.pasos : (d.pasos_en||d.pasos)) || [];
+    pasos.forEach(function(p) {
+      if (y > 260) { doc.addPage(); y = 15; }
+      sectionTitle(p.num+'. '+p.titulo);
+      var txt = p.contenido.replace(/\//g,'\n');
+      addText(txt);
+    });
+
+    // Notas
+    var notas = (es ? d.notas : (d.notas_en||d.notas)) || '';
+    if (notas) {
+      sectionTitle(es?'Notas':'Notes');
+      addText(notas);
+    }
+
+    // Footer
+    var pageCount = doc.internal.getNumberOfPages();
+    for (var i=1; i<=pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8); doc.setTextColor(180,180,180);
+      doc.text('Rietmann Ibérica · info@rietmanniberica.com · +34931592650', ml, 290);
+      doc.text(i+'/'+pageCount, W-mr, 290, {align:'right'});
+    }
+
+    var safeName = nombre.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,'');
+    doc.save(d.articulo_no+'_'+safeName+(es?'_Receta.pdf':'_Recipe.pdf'));
+    showAlert('PDF generado.','success');
+  })
+  .catch(function(e){ showAlert('Error PDF: '+e.message,'error'); });
 }
 
 showSection('fichas');
