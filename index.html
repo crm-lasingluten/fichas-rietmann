@@ -574,6 +574,7 @@ function loadProducts() {
         '<div class="product-card-actions">'+
         '<button class="btn btn-secondary" onclick="editProduct(\''+p.id+'\')">Editar</button>'+
         '<button class="btn btn-pdf" onclick="askLang(\''+p.id+'\')">PDF</button>'+
+        '<button class="btn btn-secondary" onclick="printProduct(\''+p.id+'\')">Imprimir</button>'+
         '<button class="btn btn-danger" onclick="deleteProduct(\''+p.id+'\')">Eliminar</button>'+
         '</div></div>';
     }).join('')+'</div>';
@@ -601,6 +602,91 @@ function deleteProduct(id) {
 
 function askLang(id) { pendingPdfId=id; document.getElementById('lang-modal').classList.add('open'); }
 function confirmPDF(lang) { document.getElementById('lang-modal').classList.remove('open'); generatePDF(pendingPdfId,lang); }
+
+function printProduct(id) {
+  var lang = 'es';
+  fetch(SUPABASE_URL+'/rest/v1/'+TABLE+'?id=eq.'+id, {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}})
+  .then(function(r){return r.json();})
+  .then(function(data){
+    var d = data[0]; if(!d) return;
+    var w = window.open('','_blank');
+    var html = generatePrintHTML(d, lang);
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    w.onload = function(){ w.print(); };
+  }).catch(function(e){showAlert('Error al imprimir: '+e.message,'error');});
+}
+
+function generatePrintHTML(d, lang) {
+  var es = (lang==='es');
+  var title = d.nombre || '';
+  var desc  = d.descripcion || '';
+  var ap    = d.apariencia || '';
+  var ol    = d.olor || '';
+  var ing   = (d.ingredientes||'').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+  var dos   = d.dosis_receta || '';
+  var alm   = d.almacenamiento || '';
+  var dur   = d.duracion || '';
+  var emb   = d.embalaje || '';
+  var ley   = d.ley_alimentaria || '';
+  var omg   = d.declaracion_omg || '';
+  var com   = d.comentarios || '';
+  var allergens = [
+    ['Gluten','gluten'],['Trigo','trigo'],['Cebada','cebada'],['Centeno','centeno'],
+    ['Avena','avena'],['Espelta','espelta'],['Soja','soja'],['Leche','leche'],
+    ['Huevos','huevos'],['Pescado','pescado'],['Cacahuetes','cacahuetes'],
+    ['Mostaza','mostaza'],['Sésamo','sesamo'],['Sulfitos','sulfitos'],
+    ['Altramuz','altramuz'],['Moluscos','moluscos'],['Crustáceos','crustaceos'],
+    ['Nueces','nueces'],['Apio','apio']
+  ];
+  var alergRows = allergens.map(function(a){
+    var ing_v = d['alerg_'+a[1]+'_ing']||'NO';
+    var cc_v  = d['alerg_'+a[1]+'_cc']||'NO';
+    return '<tr><td>'+a[0]+'</td><td style="text-align:center;color:'+(ing_v==='SI'||ing_v==='YES'?'#c0392b':'#27ae60')+'"><strong>'+ing_v+'</strong></td><td style="text-align:center;color:'+(cc_v==='SI'||cc_v==='YES'?'#c0392b':'#27ae60')+'"><strong>'+cc_v+'</strong></td></tr>';
+  }).join('');
+  var nut = '';
+  if(d.nut_energia_kj) nut += '<tr><td>Energía</td><td>'+d.nut_energia_kj+' kJ / '+d.nut_energia_kcal+' kcal</td></tr>';
+  if(d.nut_grasa)      nut += '<tr><td>Grasa</td><td>'+d.nut_grasa+' g</td></tr>';
+  if(d.nut_grasa_saturada) nut += '<tr><td>&nbsp;&nbsp;de las cuales saturadas</td><td>'+d.nut_grasa_saturada+' g</td></tr>';
+  if(d.nut_carbohidratos)  nut += '<tr><td>Carbohidratos</td><td>'+d.nut_carbohidratos+' g</td></tr>';
+  if(d.nut_azucares)       nut += '<tr><td>&nbsp;&nbsp;de los cuales azúcares</td><td>'+d.nut_azucares+' g</td></tr>';
+  if(d.nut_fibra)          nut += '<tr><td>Fibra</td><td>'+d.nut_fibra+' g</td></tr>';
+  if(d.nut_proteina)       nut += '<tr><td>Proteína</td><td>'+d.nut_proteina+' g</td></tr>';
+  if(d.nut_sal)            nut += '<tr><td>Sal</td><td>'+d.nut_sal+' g</td></tr>';
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+title+'</title>'+
+  '<style>body{font-family:Arial,sans-serif;font-size:11px;margin:20px;color:#222;}'+
+  'h1{font-size:16px;color:#c0392b;margin-bottom:2px;}'+
+  'h2{font-size:12px;color:#555;margin:14px 0 4px;}'+
+  'table{width:100%;border-collapse:collapse;margin-bottom:10px;}'+
+  'th{background:#c0392b;color:#fff;padding:4px 6px;text-align:left;font-size:10px;}'+
+  'td{padding:3px 6px;border-bottom:1px solid #eee;}'+
+  '.label{font-weight:bold;color:#555;width:30%;}'+
+  '@media print{button{display:none!important;}}'+
+  '</style></head><body>'+
+  '<h1>'+title+'</h1>'+
+  '<p style="color:#888;margin:0">Art. '+d.articulo_no+' &nbsp;|&nbsp; v.'+d.version+'</p>'+
+  '<p>'+desc+'</p>'+
+  '<h2>SENSORIAL</h2>'+
+  '<table><tr><td class="label">Apariencia</td><td>'+ap+'</td></tr>'+
+  '<tr><td class="label">Olor</td><td>'+ol+'</td></tr></table>'+
+  (dos?'<h2>DOSIS / RECETA</h2><p>'+dos+'</p>':'')+
+  '<h2>INGREDIENTES</h2><p>'+ing+'</p>'+
+  (nut?'<h2>VALORES NUTRICIONALES (por 100g premezcla)</h2><table><tr><th>Nutriente</th><th>Valor</th></tr>'+nut+'</table>':'')+
+  '<h2>ALÉRGENOS</h2>'+
+  '<table><tr><th>Alérgeno</th><th>Como ingrediente</th><th>Cont. cruzada</th></tr>'+alergRows+'</table>'+
+  '<h2>MÁS INFORMACIÓN</h2>'+
+  '<table>'+
+  '<tr><td class="label">OMG</td><td>'+omg+'</td></tr>'+
+  '<tr><td class="label">Almacenamiento</td><td>'+alm+'</td></tr>'+
+  '<tr><td class="label">Duración</td><td>'+dur+'</td></tr>'+
+  '<tr><td class="label">Embalaje</td><td>'+emb+'</td></tr>'+
+  '<tr><td class="label">Ley alimentaria</td><td>'+ley+'</td></tr>'+
+  (com?'<tr><td class="label">Comentarios</td><td>'+com+'</td></tr>':'')+
+  '</table>'+
+  '<p style="margin-top:20px;color:#aaa;font-size:9px">Rietmann Ibérica · info@rietmanniberica.com · +34931592650</p>'+
+  '</body></html>';
+}
 
 function showAlert(msg,type) {
   var el=document.getElementById('alert-box');
