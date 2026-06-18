@@ -641,8 +641,8 @@ function confirmLang(lang) {
 function confirmPDF(lang) { confirmLang(lang); }
 
 function loadAndPrint(id, lang) {
-  fetch(SUPABASE_URL+'/rest/v1/'+TABLE+'?id=eq.'+id, {
-    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+  fetch(SUPA_URL+'/rest/v1/'+TABLE+'?id=eq.'+id, {
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
   })
   .then(function(r){ return r.json(); })
   .then(function(data){
