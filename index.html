@@ -82,11 +82,11 @@ textarea { resize: vertical; min-height: 70px; }
 
 <div class="modal-overlay" id="lang-modal">
   <div class="modal">
-    <h3>Generar Ficha Técnica</h3>
-    <p>Selecciona el idioma del PDF</p>
+    <h3 id="lang-modal-title">Generar Ficha Técnica</h3>
+    <p>Selecciona el idioma</p>
     <div class="modal-btns">
-      <button class="btn-lang" onclick="confirmPDF('es')">🇪🇸 Español</button>
-      <button class="btn-lang" onclick="confirmPDF('en')">🇬🇧 English</button>
+      <button class="btn-lang" onclick="confirmLang('es')">🇪🇸 Español</button>
+      <button class="btn-lang" onclick="confirmLang('en')">🇬🇧 English</button>
     </div>
   </div>
 </div>
@@ -573,8 +573,8 @@ function loadProducts() {
         '</div>'+
         '<div class="product-card-actions">'+
         '<button class="btn btn-secondary" onclick="editProduct(\''+p.id+'\')">Editar</button>'+
-        '<button class="btn btn-pdf" onclick="askLang(\''+p.id+'\')">PDF</button>'+
-        '<button class="btn btn-secondary" onclick="printProduct(\''+p.id+'\')">Imprimir</button>'+
+        '<button class="btn btn-pdf" onclick="askPDF(\''+p.id+'\')">PDF</button>'+
+        '<button class="btn btn-secondary" onclick="askPrint(\''+p.id+'\')">Imprimir</button>'+
         '<button class="btn btn-danger" onclick="deleteProduct(\''+p.id+'\')">Eliminar</button>'+
         '</div></div>';
     }).join('')+'</div>';
@@ -600,89 +600,114 @@ function deleteProduct(id) {
   .catch(function(e){showAlert('Error: '+e.message,'error');});
 }
 
-function askLang(id) { pendingPdfId=id; document.getElementById('lang-modal').classList.add('open'); }
-function confirmPDF(lang) { document.getElementById('lang-modal').classList.remove('open'); generatePDF(pendingPdfId,lang); }
+var pendingPrintMode = 'pdf'; // 'pdf' o 'print'
+function askPDF(id)   { pendingPdfId=id; pendingPrintMode='pdf';   document.getElementById('lang-modal-title').textContent='Generar PDF'; document.getElementById('lang-modal').classList.add('open'); }
+function askPrint(id) { pendingPdfId=id; pendingPrintMode='print'; document.getElementById('lang-modal-title').textContent='Imprimir Ficha'; document.getElementById('lang-modal').classList.add('open'); }
+function askLang(id)  { askPDF(id); } // compatibilidad
+function confirmLang(lang) {
+  document.getElementById('lang-modal').classList.remove('open');
+  if(pendingPrintMode==='print') { printProduct(pendingPdfId, lang); }
+  else { generatePDF(pendingPdfId, lang); }
+}
+function confirmPDF(lang) { confirmLang(lang); } // compatibilidad
 
-function printProduct(id) {
-  var lang = 'es';
+function printProduct(id, lang) {
   fetch(SUPABASE_URL+'/rest/v1/'+TABLE+'?id=eq.'+id, {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}})
   .then(function(r){return r.json();})
   .then(function(data){
     var d = data[0]; if(!d) return;
     var w = window.open('','_blank');
-    var html = generatePrintHTML(d, lang);
-    w.document.write(html);
+    w.document.write(generatePrintHTML(d, lang));
     w.document.close();
-    w.focus();
-    w.onload = function(){ w.print(); };
+    setTimeout(function(){ w.focus(); w.print(); }, 800);
   }).catch(function(e){showAlert('Error al imprimir: '+e.message,'error');});
 }
 
 function generatePrintHTML(d, lang) {
   var es = (lang==='es');
-  var title = d.nombre || '';
-  var desc  = d.descripcion || '';
-  var ap    = d.apariencia || '';
-  var ol    = d.olor || '';
-  var ing   = (d.ingredientes||'').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
-  var dos   = d.dosis_receta || '';
-  var alm   = d.almacenamiento || '';
-  var dur   = d.duracion || '';
-  var emb   = d.embalaje || '';
-  var ley   = d.ley_alimentaria || '';
-  var omg   = d.declaracion_omg || '';
-  var com   = d.comentarios || '';
-  var allergens = [
-    ['Gluten','gluten'],['Trigo','trigo'],['Cebada','cebada'],['Centeno','centeno'],
-    ['Avena','avena'],['Espelta','espelta'],['Soja','soja'],['Leche','leche'],
-    ['Huevos','huevos'],['Pescado','pescado'],['Cacahuetes','cacahuetes'],
-    ['Mostaza','mostaza'],['Sésamo','sesamo'],['Sulfitos','sulfitos'],
-    ['Altramuz','altramuz'],['Moluscos','moluscos'],['Crustáceos','crustaceos'],
-    ['Nueces','nueces'],['Apio','apio']
-  ];
+  var nombre    = (es ? d.nombre         : (d.nombre_en||d.nombre)) || '';
+  var desc      = (es ? d.descripcion    : (d.descripcion_en||d.descripcion)) || '';
+  var ap        = (es ? d.apariencia     : (d.apariencia_en||d.apariencia)) || '';
+  var ol        = (es ? d.olor           : (d.olor_en||d.olor)) || '';
+  var dos       = (es ? d.dosis_receta   : (d.dosis_receta_en||d.dosis_receta)) || '';
+  var ing       = (es ? d.ingredientes   : (d.ingredientes_en||d.ingredientes)) || '';
+  ing = ing.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+  var alm       = (es ? d.almacenamiento : (d.almacenamiento_en||d.almacenamiento)) || '';
+  var dur       = (es ? d.duracion       : (d.duracion_en||d.duracion)) || '';
+  var emb       = (es ? d.embalaje       : (d.embalaje_en||d.embalaje)) || '';
+  var ley       = (es ? d.ley_alimentaria: (d.ley_alimentaria_en||d.ley_alimentaria)) || '';
+  var omg       = (es ? d.declaracion_omg: (d.declaracion_omg_en||d.declaracion_omg)) || '';
+  var com       = (es ? d.comentarios    : (d.comentarios_en||d.comentarios)) || '';
+
+  var allergens = es
+    ? [['Gluten','gluten'],['Trigo','trigo'],['Cebada','cebada'],['Centeno','centeno'],
+       ['Avena','avena'],['Espelta','espelta'],['Soja','soja'],['Leche','leche'],
+       ['Huevos','huevos'],['Pescado','pescado'],['Cacahuetes','cacahuetes'],
+       ['Mostaza','mostaza'],['Sésamo','sesamo'],['Sulfitos','sulfitos'],
+       ['Altramuz','altramuz'],['Moluscos','moluscos'],['Crustáceos','crustaceos'],
+       ['Nueces','nueces'],['Apio','apio']]
+    : [['Gluten','gluten'],['Wheat','trigo'],['Barley','cebada'],['Rye','centeno'],
+       ['Oats','avena'],['Spelt','espelta'],['Soy','soja'],['Milk','leche'],
+       ['Eggs','huevos'],['Fish','pescado'],['Peanuts','cacahuetes'],
+       ['Mustard','mostaza'],['Sesame','sesamo'],['Sulphites','sulfitos'],
+       ['Lupins','altramuz'],['Molluscs','moluscos'],['Crustaceans','crustaceos'],
+       ['Nuts','nueces'],['Celery','apio']];
+
+  var ingLabel = es ? 'Como ingrediente' : 'As ingredient';
+  var ccLabel  = es ? 'Cont. cruzada'    : 'Cross-cont.';
+
   var alergRows = allergens.map(function(a){
-    var ing_v = d['alerg_'+a[1]+'_ing']||'NO';
-    var cc_v  = d['alerg_'+a[1]+'_cc']||'NO';
-    return '<tr><td>'+a[0]+'</td><td style="text-align:center;color:'+(ing_v==='SI'||ing_v==='YES'?'#c0392b':'#27ae60')+'"><strong>'+ing_v+'</strong></td><td style="text-align:center;color:'+(cc_v==='SI'||cc_v==='YES'?'#c0392b':'#27ae60')+'"><strong>'+cc_v+'</strong></td></tr>';
+    var iv = d['alerg_'+a[1]+'_ing']||'NO';
+    var cv = d['alerg_'+a[1]+'_cc']||'NO';
+    var iyes = (iv==='SI'||iv==='YES'); var cyes = (cv==='SI'||cv==='YES');
+    return '<tr><td>'+a[0]+'</td>'+
+      '<td style="text-align:center;color:'+(iyes?'#c0392b':'#27ae60')+'"><strong>'+iv+'</strong></td>'+
+      '<td style="text-align:center;color:'+(cyes?'#c0392b':'#27ae60')+'"><strong>'+cv+'</strong></td></tr>';
   }).join('');
-  var nut = '';
-  if(d.nut_energia_kj) nut += '<tr><td>Energía</td><td>'+d.nut_energia_kj+' kJ / '+d.nut_energia_kcal+' kcal</td></tr>';
-  if(d.nut_grasa)      nut += '<tr><td>Grasa</td><td>'+d.nut_grasa+' g</td></tr>';
-  if(d.nut_grasa_saturada) nut += '<tr><td>&nbsp;&nbsp;de las cuales saturadas</td><td>'+d.nut_grasa_saturada+' g</td></tr>';
-  if(d.nut_carbohidratos)  nut += '<tr><td>Carbohidratos</td><td>'+d.nut_carbohidratos+' g</td></tr>';
-  if(d.nut_azucares)       nut += '<tr><td>&nbsp;&nbsp;de los cuales azúcares</td><td>'+d.nut_azucares+' g</td></tr>';
-  if(d.nut_fibra)          nut += '<tr><td>Fibra</td><td>'+d.nut_fibra+' g</td></tr>';
-  if(d.nut_proteina)       nut += '<tr><td>Proteína</td><td>'+d.nut_proteina+' g</td></tr>';
-  if(d.nut_sal)            nut += '<tr><td>Sal</td><td>'+d.nut_sal+' g</td></tr>';
-  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+title+'</title>'+
-  '<style>body{font-family:Arial,sans-serif;font-size:11px;margin:20px;color:#222;}'+
-  'h1{font-size:16px;color:#c0392b;margin-bottom:2px;}'+
-  'h2{font-size:12px;color:#555;margin:14px 0 4px;}'+
-  'table{width:100%;border-collapse:collapse;margin-bottom:10px;}'+
-  'th{background:#c0392b;color:#fff;padding:4px 6px;text-align:left;font-size:10px;}'+
-  'td{padding:3px 6px;border-bottom:1px solid #eee;}'+
-  '.label{font-weight:bold;color:#555;width:30%;}'+
-  '@media print{button{display:none!important;}}'+
+
+  var nutLabel = es ? 'VALORES NUTRICIONALES (por 100g premezcla)' : 'NUTRITIONAL VALUES (per 100g premix)';
+  var nutRows = '';
+  if(d.nut_energia_kj)      nutRows += '<tr><td>'+(es?'Energía':'Energy')+'</td><td>'+d.nut_energia_kj+' kJ / '+d.nut_energia_kcal+' kcal</td></tr>';
+  if(d.nut_grasa)           nutRows += '<tr><td>'+(es?'Grasa':'Fat')+'</td><td>'+d.nut_grasa+' g</td></tr>';
+  if(d.nut_grasa_saturada)  nutRows += '<tr><td>&nbsp;&nbsp;'+(es?'de las cuales saturadas':'of which saturated')+'</td><td>'+d.nut_grasa_saturada+' g</td></tr>';
+  if(d.nut_carbohidratos)   nutRows += '<tr><td>'+(es?'Carbohidratos':'Carbohydrates')+'</td><td>'+d.nut_carbohidratos+' g</td></tr>';
+  if(d.nut_azucares)        nutRows += '<tr><td>&nbsp;&nbsp;'+(es?'de los cuales azúcares':'of which sugars')+'</td><td>'+d.nut_azucares+' g</td></tr>';
+  if(d.nut_fibra)           nutRows += '<tr><td>'+(es?'Fibra':'Dietary fibre')+'</td><td>'+d.nut_fibra+' g</td></tr>';
+  if(d.nut_proteina)        nutRows += '<tr><td>'+(es?'Proteína':'Protein')+'</td><td>'+d.nut_proteina+' g</td></tr>';
+  if(d.nut_sal)             nutRows += '<tr><td>Sal / Salt</td><td>'+d.nut_sal+' g</td></tr>';
+
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+nombre+'</title>'+
+  '<style>'+
+  'body{font-family:Arial,sans-serif;font-size:11px;margin:24px;color:#222;}'+
+  'h1{font-size:17px;color:#c0392b;margin-bottom:2px;}'+
+  'h2{font-size:11px;color:#c0392b;text-transform:uppercase;margin:14px 0 4px;border-bottom:1px solid #eee;padding-bottom:2px;}'+
+  'table{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:10px;}'+
+  'th{background:#c0392b;color:#fff;padding:4px 6px;text-align:left;}'+
+  'td{padding:3px 6px;border-bottom:1px solid #f0f0f0;}'+
+  '.label{font-weight:bold;color:#555;width:32%;}'+
+  '@media print{@page{margin:15mm;} button{display:none!important;}}'+
   '</style></head><body>'+
-  '<h1>'+title+'</h1>'+
-  '<p style="color:#888;margin:0">Art. '+d.articulo_no+' &nbsp;|&nbsp; v.'+d.version+'</p>'+
+  '<h1>'+nombre+'</h1>'+
+  '<p style="color:#888;margin:0 0 8px">Art. '+d.articulo_no+' &nbsp;|&nbsp; v.'+d.version+(d.tipo_mezcla?' &nbsp;|&nbsp; '+d.tipo_mezcla:'')+'</p>'+
   '<p>'+desc+'</p>'+
-  '<h2>SENSORIAL</h2>'+
-  '<table><tr><td class="label">Apariencia</td><td>'+ap+'</td></tr>'+
-  '<tr><td class="label">Olor</td><td>'+ol+'</td></tr></table>'+
-  (dos?'<h2>DOSIS / RECETA</h2><p>'+dos+'</p>':'')+
-  '<h2>INGREDIENTES</h2><p>'+ing+'</p>'+
-  (nut?'<h2>VALORES NUTRICIONALES (por 100g premezcla)</h2><table><tr><th>Nutriente</th><th>Valor</th></tr>'+nut+'</table>':'')+
-  '<h2>ALÉRGENOS</h2>'+
-  '<table><tr><th>Alérgeno</th><th>Como ingrediente</th><th>Cont. cruzada</th></tr>'+alergRows+'</table>'+
-  '<h2>MÁS INFORMACIÓN</h2>'+
+  '<h2>'+(es?'Sensorial':'Sensory')+'</h2>'+
   '<table>'+
-  '<tr><td class="label">OMG</td><td>'+omg+'</td></tr>'+
-  '<tr><td class="label">Almacenamiento</td><td>'+alm+'</td></tr>'+
-  '<tr><td class="label">Duración</td><td>'+dur+'</td></tr>'+
-  '<tr><td class="label">Embalaje</td><td>'+emb+'</td></tr>'+
-  '<tr><td class="label">Ley alimentaria</td><td>'+ley+'</td></tr>'+
-  (com?'<tr><td class="label">Comentarios</td><td>'+com+'</td></tr>':'')+
+  '<tr><td class="label">'+(es?'Apariencia':'Appearance')+'</td><td>'+ap+'</td></tr>'+
+  '<tr><td class="label">'+(es?'Olor':'Smell')+'</td><td>'+ol+'</td></tr>'+
+  '</table>'+
+  (dos?'<h2>'+(es?'Dosis / Receta':'Dosage / Recipe')+'</h2><p>'+dos+'</p>':'')+
+  '<h2>'+(es?'Ingredientes':'Ingredients')+'</h2><p>'+ing+'</p>'+
+  (nutRows?'<h2>'+nutLabel+'</h2><table><tr><th>'+(es?'Nutriente':'Nutrient')+'</th><th>'+(es?'Valor':'Value')+'</th></tr>'+nutRows+'</table>':'')+
+  '<h2>'+(es?'Alérgenos':'Allergens')+'</h2>'+
+  '<table><tr><th>'+(es?'Alérgeno':'Allergen')+'</th><th>'+ingLabel+'</th><th>'+ccLabel+'</th></tr>'+alergRows+'</table>'+
+  '<h2>'+(es?'Más información':'More information')+'</h2>'+
+  '<table>'+
+  '<tr><td class="label">OMG / GMO</td><td>'+omg+'</td></tr>'+
+  '<tr><td class="label">'+(es?'Almacenamiento':'Storage')+'</td><td>'+alm+'</td></tr>'+
+  '<tr><td class="label">'+(es?'Duración':'Duration')+'</td><td>'+dur+'</td></tr>'+
+  '<tr><td class="label">'+(es?'Embalaje':'Packaging')+'</td><td>'+emb+'</td></tr>'+
+  '<tr><td class="label">'+(es?'Ley alimentaria':'Food Law')+'</td><td>'+ley+'</td></tr>'+
+  (com?'<tr><td class="label">'+(es?'Comentarios':'Comments')+'</td><td>'+com+'</td></tr>':'')+
   '</table>'+
   '<p style="margin-top:20px;color:#aaa;font-size:9px">Rietmann Ibérica · info@rietmanniberica.com · +34931592650</p>'+
   '</body></html>';
