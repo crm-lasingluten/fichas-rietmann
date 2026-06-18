@@ -1074,16 +1074,16 @@ function printReceta(id, lang) {
     var pasosHTML = pasos.map(function(p){
       return '<h2>'+p.num+'. '+p.titulo.toUpperCase()+'</h2><p>'+p.contenido.replace(/\//g,'<br>')+'</p>';
     }).join('');
-    var logoHtml = LOGO_B64 ? '<img src="'+LOGO_B64+'" style="height:70px;object-fit:contain;">' : '<span style="font-weight:bold;color:#c0392b;font-size:14px">RIETMANN IBERICA</span>';
+    var logoHtml = LOGO_B64 ? '<img src="'+LOGO_B64+'" style="height:90px;object-fit:contain;">' : '<span style="font-weight:bold;color:#c0392b;font-size:14px">RIETMANN IBERICA</span>';
     var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+tipoLabel+' - '+nombre+'</title>'+
       '<style>'+
       'body{font-family:Arial,sans-serif;font-size:12px;margin:0;color:#222;}'+
       '.header{display:flex;justify-content:space-between;align-items:flex-end;padding:24px 32px 16px;border-bottom:3px solid #c0392b;}'+
       '.header-logo{flex-shrink:0;}'+
       '.header-title{font-size:36px;font-weight:900;color:#c0392b;letter-spacing:3px;line-height:1;}'+
-      '.subheader{padding:10px 32px;border-bottom:1px solid #eee;background:#fafafa;}'+
-      '.subheader h3{font-size:15px;font-weight:bold;color:#222;margin:0 0 2px;}'+
-      '.subheader p{font-size:11px;color:#888;margin:0;}'+
+      '.subheader{padding:12px 32px;border-bottom:1px solid #eee;background:#fafafa;}'+
+      '.subheader h3{font-size:18px;font-weight:bold;color:#222;margin:0 0 4px;}'+
+      '.subheader p{font-size:13px;color:#888;margin:0;}'+
       '.content{padding:24px 32px;}'+
       'h2{font-size:11px;font-weight:bold;color:#c0392b;text-transform:uppercase;letter-spacing:1px;margin:20px 0 5px;border-bottom:1px solid #eee;padding-bottom:3px;}'+
       'p{line-height:1.8;margin-bottom:10px;font-size:12px;}'+
@@ -1142,7 +1142,7 @@ function generateRecetaPDF(id, lang) {
     // ── HEADER ──
     // Logo arriba izquierda (proporción correcta ~60x32mm)
     if (LOGO_B64) {
-      doc.addImage(LOGO_B64, 'PNG', ml, 10, 40, 22);
+      doc.addImage(LOGO_B64, 'PNG', ml, 8, 52, 28);
     }
     // Título tipo grande alineado a la derecha, mismo nivel que logo
     doc.setFontSize(32); doc.setTextColor(red[0],red[1],red[2]); doc.setFont('helvetica','bold');
@@ -1154,11 +1154,11 @@ function generateRecetaPDF(id, lang) {
     doc.line(ml, y, W-mr, y); y += 7;
 
     // Nombre del producto
-    doc.setFontSize(13); doc.setTextColor(dark[0],dark[1],dark[2]); doc.setFont('helvetica','bold');
-    doc.text(nombre, ml, y); y += 6;
+    doc.setFontSize(15); doc.setTextColor(dark[0],dark[1],dark[2]); doc.setFont('helvetica','bold');
+    doc.text(nombre, ml, y); y += 7;
     // Artículo
-    doc.setFontSize(9); doc.setTextColor(gray[0],gray[1],gray[2]); doc.setFont('helvetica','normal');
-    doc.text('Art. '+d.articulo_no, ml, y); y += 8;
+    doc.setFontSize(11); doc.setTextColor(gray[0],gray[1],gray[2]); doc.setFont('helvetica','normal');
+    doc.text('Art. '+d.articulo_no, ml, y); y += 10;
 
     function sectionTitle(txt) {
       doc.setFontSize(10); doc.setTextColor(red[0],red[1],red[2]); doc.setFont('helvetica','bold');
