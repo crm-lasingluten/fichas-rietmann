@@ -619,29 +619,17 @@ function loadAndPrint(id, lang) {
   .then(function(data){
     var d = data[0];
     if (!d) { showAlert('Producto no encontrado','error'); return; }
-    // Guardamos HTML en sessionStorage y abrimos página en blanco
     var html = generatePrintHTML(d, lang);
-    sessionStorage.setItem('print_html', html);
-    var w = window.open(location.href.replace(/\/[^\/]*$/, '/') + 'print.html', '_blank');
-    // Fallback: si no existe print.html, escribimos directamente
-    if (!w) { showAlert('El navegador bloqueó la ventana. Permite popups para este sitio.','error'); return; }
-    w.addEventListener('load', function(){
-      try {
-        w.document.open();
-        w.document.write(sessionStorage.getItem('print_html'));
-        w.document.close();
-      } catch(e) {}
-    });
-    // Segundo fallback con timeout
-    setTimeout(function(){
-      try {
-        if (w.document.body && w.document.body.innerHTML.trim()==='') {
-          w.document.open();
-          w.document.write(sessionStorage.getItem('print_html'));
-          w.document.close();
-        }
-      } catch(e){}
-    }, 1000);
+    var blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href   = url;
+    a.target = '_blank';
+    a.rel    = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 10000);
   })
   .catch(function(e){ showAlert('Error: '+e.message,'error'); });
 }
