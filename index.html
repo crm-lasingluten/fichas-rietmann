@@ -620,16 +620,11 @@ function loadAndPrint(id, lang) {
     var d = data[0];
     if (!d) { showAlert('Producto no encontrado','error'); return; }
     var html = generatePrintHTML(d, lang);
-    var blob = new Blob([html], {type:'text/html;charset=utf-8'});
-    var url  = URL.createObjectURL(blob);
-    var a    = document.createElement('a');
-    a.href   = url;
-    a.target = '_blank';
-    a.rel    = 'noopener';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(function(){ URL.revokeObjectURL(url); }, 10000);
+    var w = window.open('','_blank','width=950,height=750');
+    if (!w) { showAlert('Permite ventanas emergentes para este sitio.','error'); return; }
+    w.document.write(html);
+    w.document.close();
+    setTimeout(function(){ w.print(); }, 700);
   })
   .catch(function(e){ showAlert('Error: '+e.message,'error'); });
 }
