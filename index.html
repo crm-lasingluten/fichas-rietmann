@@ -663,154 +663,222 @@ function generatePrintHTML(d, lang) {
   var isEN = !es;
 
   var T = {
-    prodSpec: es?'Producto Especificacion':'Product Specification',
-    artNo: es?'Articulo No.: ':'Article No.: ',
-    desc: es?'Descripcion del Producto:':'Product Description:',
+    prodSpec:  es?'Producto Especificacion':'Product Specification',
+    artNo:     es?'Articulo No.: ':'Article No.: ',
+    desc:      es?'Descripcion del Producto:':'Product Description:',
     sensorial: es?'SENSORIAL':'SENSORY',
-    apariencia: es?'Apariencia, Consistencia':'Appearance, Consistency',
-    olor: es?'Olor':'Smell',
-    dosis: es?'Dosis recomendada / Receta para hornear':'Recommended dose / Baking recipe',
-    ingredientes: es?'Ingredientes:':'Ingredients:',
-    nutPre: es?'Valores Nutricionales por 100g Premezcla (calculado)':'Nutritional values per 100g Premix (calculated)',
-    micro: es?'Microbiologia':'Microbiology',
+    apariencia:es?'Apariencia, Consistencia:':'Appearance, Consistency:',
+    olor:      es?'Olor:':'Smell:',
+    dosis:     es?'Dosis recomendada / Receta para hornear':'Recommended dose / Baking recipe',
+    ing:       es?'Ingredientes:':'Ingredients:',
+    nutPre:    es?'Valores Nutricionales por 100 g Premezcla calculado':'Nutritional values per 100g Premix (calculated)',
+    nutAcab:   es?'Valores Nutricionales por 100 g Producto Acabado':'Nutritional values per 100g Finished Product',
+    nutNota:   es?'Los valores nutricionales estan sujetos a las variaciones tipicas de los productos naturales.':'Nutritional values are subject to typical variations of natural products.',
+    energia:   es?'Energia:':'Energy:',
+    grasa:     es?'Grasa:':'Fat:',
+    sat:       es?'de los cuales saturados:':'of which saturated:',
+    carbs:     es?'Carbohidratos:':'Carbohydrates:',
+    azuc:      es?'de los cuales azucares:':'of which sugars:',
+    fibra:     es?'Fibra dietetica:':'Dietary fibre:',
+    prot:      es?'Proteina:':'Protein:',
+    sal:       es?'Sal:':'Salt:',
+    micro:     es?'Microbiologia':'Microbiology',
     microDesc: es?'En el sentido comercial convencional, el producto esta libre de microorganismos patogenos y cumple con el Reglamento Europeo de Aflatoxinas.':'In the conventional commercial sense, the product is free of pathogenic microorganisms and complies with the European Aflatoxin Regulation.',
-    param: es?'Parametro':'Parameter',
-    guia: es?'Valor Guia (ufc/g)':'Guide value (cfu/g)',
-    critico: es?'Valor Critico (ufc/g)':'Critical value (cfu/g)',
-    alergTitle: es?'Declaracion de Alergenos (segun EU-Reg 1169/2011)':'Allergen Declaration (EU-Reg 1169/2011)',
-    alergCol1: es?'Alergeno':'Allergen',
-    alergCol2: es?'Como ingrediente':'As ingredient',
-    alergCol3: es?'Posible cont. cruzada':'Possible cross-contamination',
-    infoGen: es?'Informacion General':'General Information',
-    omg: es?'Declaracion OMG:':'GMO Declaration:',
-    almacen: es?'Almacenamiento:':'Storage:',
-    duracion: es?'Duracion:':'Shelf life:',
-    embalaje: es?'Embalaje:':'Packaging:',
-    ley: es?'Ley Alimentaria:':'Food Law:',
-    coment: es?'Comentarios:':'Comments:',
+    param:     es?'Parametro':'Parameter',
+    guia:      es?'Valor Guia (ufc/g)':'Guide value (cfu/g)',
+    critico:   es?'Valor Critico (ufc/g)':'Critical value (cfu/g)',
+    alerg:     es?'Declaracion de Alergenos (segun EU-Reg 1169/2011)':'Allergen Declaration (EU-Reg 1169/2011)',
+    alCol1:    es?'Alergeno':'Allergen',
+    alCol2:    es?'Como ingrediente':'As ingredient',
+    alCol3:    es?'Posible contaminacion cruzada':'Possible cross-contamination',
+    infoGen:   es?'Informacion General':'General Information',
+    omgL:      es?'Declaracion OMG:':'GMO Declaration:',
+    almL:      es?'Almacenamiento:':'Storage:',
+    durL:      es?'Duracion:':'Shelf life:',
+    embL:      es?'Embalaje:':'Packaging:',
+    leyL:      es?'Ley Alimentaria:':'Food Law:',
+    certL:     es?'Certificacion:':'Certification:',
+    comL:      es?'Comentarios:':'Comments:',
+    verL:      es?'Version:':'Version:',
+    pie:       es?'Documento EDP, valido sin firma. ID: ':'EDP document, valid without signature. ID: ',
   };
 
   var txt = {
-    descripcion: (isEN && d.descripcion_en) ? d.descripcion_en : d.descripcion,
-    apariencia:  (isEN && d.apariencia_en)  ? d.apariencia_en  : d.apariencia,
-    olor:        (isEN && d.olor_en)         ? d.olor_en        : d.olor,
-    dosis:       (isEN && d.dosis_receta_en) ? d.dosis_receta_en: d.dosis_receta,
-    ingredientes:(isEN && d.ingredientes_en) ? d.ingredientes_en: d.ingredientes,
-    omg:         (isEN && d.declaracion_omg_en) ? d.declaracion_omg_en : d.declaracion_omg,
-    almacen:     (isEN && d.almacenamiento_en)  ? d.almacenamiento_en  : d.almacenamiento,
-    duracion:    (isEN && d.duracion_en)     ? d.duracion_en    : d.duracion,
-    embalaje:    (isEN && d.embalaje_en)     ? d.embalaje_en    : d.embalaje,
-    ley:         (isEN && d.ley_alimentaria_en) ? d.ley_alimentaria_en : d.ley_alimentaria,
-    comentarios: (isEN && d.comentarios_en)  ? d.comentarios_en : d.comentarios,
+    nombre:      ((isEN && d.nombre_en)          ? d.nombre_en          : d.nombre)          || '',
+    desc:        ((isEN && d.descripcion_en)      ? d.descripcion_en     : d.descripcion)     || '',
+    apariencia:  ((isEN && d.apariencia_en)       ? d.apariencia_en      : d.apariencia)      || '',
+    olor:        ((isEN && d.olor_en)             ? d.olor_en            : d.olor)            || '',
+    dosis:       ((isEN && d.dosis_receta_en)     ? d.dosis_receta_en    : d.dosis_receta)    || '',
+    ing:         ((isEN && d.ingredientes_en)     ? d.ingredientes_en    : d.ingredientes)    || '',
+    omg:         ((isEN && d.declaracion_omg_en)  ? d.declaracion_omg_en : d.declaracion_omg) || '',
+    alm:         ((isEN && d.almacenamiento_en)   ? d.almacenamiento_en  : d.almacenamiento)  || '',
+    dur:         ((isEN && d.duracion_en)         ? d.duracion_en        : d.duracion)        || '',
+    emb:         ((isEN && d.embalaje_en)         ? d.embalaje_en        : d.embalaje)        || '',
+    ley:         ((isEN && d.ley_alimentaria_en)  ? d.ley_alimentaria_en : d.ley_alimentaria) || '',
+    com:         ((isEN && d.comentarios_en)      ? d.comentarios_en     : d.comentarios)     || '',
   };
 
-  var logoHtml = LOGO_B64 ? '<img src="'+LOGO_B64+'" style="height:52px;object-fit:contain;">' : '<span style="font-weight:bold;color:#c0392b;">RIETMANN IBERICA</span>';
-  var nombre = (isEN && d.nombre_en) ? d.nombre_en : d.nombre;
+  var ingHTML = txt.ing.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+  var logoHtml = LOGO_B64 ? '<img src="'+LOGO_B64+'" style="height:44px;object-fit:contain;">' : '';
 
-  // Ingredientes con negritas
-  var ingHTML = (txt.ingredientes||'').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
-
-  // Nutrición
-  var nutRows = '';
-  if(d.nut_energia_kj) nutRows += '<tr><td class="nl">'+(es?'Energia':'Energy')+'</td><td>'+d.nut_energia_kj+' kJ / '+d.nut_energia_kcal+' kcal</td></tr>';
-  if(d.nut_grasa)      nutRows += '<tr><td class="nl">'+(es?'Grasa':'Fat')+'</td><td>'+d.nut_grasa+' g</td></tr>';
-  if(d.nut_grasa_saturada) nutRows += '<tr><td class="nl ni">'+(es?'de los cuales saturados':'of which saturated')+'</td><td>'+d.nut_grasa_saturada+' g</td></tr>';
-  if(d.nut_carbohidratos)  nutRows += '<tr><td class="nl">'+(es?'Carbohidratos':'Carbohydrates')+'</td><td>'+d.nut_carbohidratos+' g</td></tr>';
-  if(d.nut_azucares)       nutRows += '<tr><td class="nl ni">'+(es?'de los cuales azucares':'of which sugars')+'</td><td>'+d.nut_azucares+' g</td></tr>';
-  if(d.nut_fibra)          nutRows += '<tr><td class="nl">'+(es?'Fibra':'Fibre')+'</td><td>'+d.nut_fibra+' g</td></tr>';
-  if(d.nut_proteina)       nutRows += '<tr><td class="nl">'+(es?'Proteina':'Protein')+'</td><td>'+d.nut_proteina+' g</td></tr>';
-  if(d.nut_sal)            nutRows += '<tr><td class="nl">Sal / Salt</td><td>'+d.nut_sal+' g</td></tr>';
+  // Nutrición premezcla
+  function nutRow(label, val, indent) {
+    if (!val) return '';
+    return '<tr><td class="'+(indent?'ni':'nb')+'">'+label+'</td><td>'+val+'</td></tr>';
+  }
+  var nutPreRows = ''
+    + nutRow(T.energia,   (d.nut_energia_kj||'')+'kJ / '+(d.nut_energia_kcal||'')+' kcal', false)
+    + nutRow(T.grasa,     (d.nut_grasa||'')+'g', false)
+    + nutRow(T.sat,       (d.nut_grasa_saturada||'')+'g', true)
+    + nutRow(T.carbs,     (d.nut_carbohidratos||'')+'g', false)
+    + nutRow(T.azuc,      (d.nut_azucares||'')+'g', true)
+    + nutRow(T.fibra,     (d.nut_fibra||'')+'g', false)
+    + nutRow(T.prot,      (d.nut_proteina||'')+'g', false)
+    + nutRow(T.sal,       (d.nut_sal||'')+'g', false);
 
   // Microbiología
-  var microLabelsES = ['Recuento total de viables (30C)','Escherichia coli','Coagulasa - estafilococos positivos','Presunto Bacillus cereus','Clostridium perfringens','Mohos y levaduras','Salmonella'];
-  var microLabelsEN = ['Total viable count (30C)','Escherichia coli','Coagulase - positive staphylococci','Suspected Bacillus cereus','Clostridium perfringens','Moulds and yeasts','Salmonella'];
-  var microKeys    = ['recuento_total','ecoli','estafilococos','bacillus','clostridium','mohos','salmonella'];
+  var microLabelsES = ['Recuento total de viables (30C)','Escherichia coli','Coagulasa - estafilococos positivos','Presunto Bacillus cereus','Clostridium perfringens','Salmonella','Moho'];
+  var microLabelsEN = ['Total viable count (30C)','Escherichia coli','Coagulase - positive staphylococci','Suspected Bacillus cereus','Clostridium perfringens','Salmonella','Moulds'];
+  var microKeys    = ['recuento_total','ecoli','estafilococos','bacillus','clostridium','salmonella','mohos'];
   var microRows = '';
   microKeys.forEach(function(k,i){
     var label = es ? microLabelsES[i] : microLabelsEN[i];
-    var guia  = d['micro_'+k+'_guia']  || '';
-    var crit  = d['micro_'+k+'_critico'] || '';
-    microRows += '<tr><td>'+label+'</td><td style="text-align:center">'+guia+'</td><td style="text-align:center">'+crit+'</td></tr>';
+    var g = d['micro_'+k+'_guia']||''; var c = d['micro_'+k+'_critico']||'';
+    microRows += '<tr><td>'+label+'</td><td style="text-align:center">'+g+'</td><td style="text-align:center">'+c+'</td></tr>';
   });
 
   // Alérgenos
-  var alergNamesES = ['Gluten','Trigo','Cebada','Centeno','Avena','Espelta','Kamut','Hibridos','Crustaceos','Huevos','Pescado','Cacahuetes','Soja','Leche','Nueces','Almendras','Avellanas','Anacardos','Nueces pecan','Nueces Brasil','Pistachos','Macadamia','Apio','Mostaza','Sesamo','Sulfitos','Altramuz','Moluscos'];
-  var alergNamesEN = ['Gluten','Wheat','Barley','Rye','Oats','Spelt','Kamut','Hybrids','Crustaceans','Eggs','Fish','Peanuts','Soy','Milk','Nuts','Almonds','Hazelnuts','Cashews','Pecans','Brazil nuts','Pistachios','Macadamia','Celery','Mustard','Sesame','Sulphites','Lupins','Molluscs'];
-  var alergKeys = ['gluten','trigo','cebada','centeno','avena','espelta','kamut','hibridos','crustaceos','huevos','pescado','cacahuetes','soja','leche','nueces','almendras','avellanas','anacardos','nueces_pecan','nueces_brasil','pistachos','macadamia','apio','mostaza','sesamo','sulfitos','altramuz','moluscos'];
-  var alergRows = '';
-  alergKeys.forEach(function(k,i){
-    var label = es ? alergNamesES[i] : alergNamesEN[i];
+  var alNamesES = ['Cereales que contienen gluten','-- Trigo','-- Cebada','-- Centeno','-- Avena','-- Espelta','-- Kamut','-- Hibridos','Crustaceos y productos derivados','Huevos y productos derivados','Pescado y productos derivados','Cacahuetes y productos derivados','Soja y productos derivados','Leche y productos derivados','-- Almendras','-- Avellanas','-- Anacardos','-- Nueces de pecan','-- Nueces de Brasil','-- Pistachos','-- Macadamia','Apio y productos derivados','Mostaza y sus productos','Sesamo y productos derivados','Dioxido de azufre y sulfitos >= 10mg/Kg','Altramuz y sus productos','Moluscos y productos derivados'];
+  var alNamesEN = ['Cereals containing gluten','-- Wheat','-- Barley','-- Rye','-- Oats','-- Spelt','-- Kamut','-- Hybrids','Crustaceans and derived products','Eggs and derived products','Fish and derived products','Peanuts and derived products','Soy and derived products','Milk and derived products','-- Almonds','-- Hazelnuts','-- Cashews','-- Pecans','-- Brazil nuts','-- Pistachios','-- Macadamia','Celery and derived products','Mustard and products','Sesame and derived products','Sulphur dioxide and sulphites >= 10mg/Kg','Lupins and products','Molluscs and derived products'];
+  var alKeys = ['gluten','trigo','cebada','centeno','avena','espelta','kamut','hibridos','crustaceos','huevos','pescado','cacahuetes','soja','leche','almendras','avellanas','anacardos','nueces_pecan','nueces_brasil','pistachos','macadamia','apio','mostaza','sesamo','sulfitos','altramuz','moluscos'];
+  var alRows = '';
+  alKeys.forEach(function(k,i){
+    var lb = es ? alNamesES[i] : alNamesEN[i];
     var iv = d['alerg_'+k+'_ing']||'NO'; var cv = d['alerg_'+k+'_cc']||'NO';
-    var ic = (iv==='SI'||iv==='YES') ? '#c0392b' : '#27ae60';
-    var cc2 = (cv==='SI'||cv==='YES') ? '#c0392b' : '#27ae60';
-    alergRows += '<tr><td>'+label+'</td><td style="text-align:center;color:'+ic+'"><strong>'+iv+'</strong></td><td style="text-align:center;color:'+cc2+'"><strong>'+cv+'</strong></td></tr>';
+    var ic = (iv==='SI'||iv==='YES')?'#c0392b':'#2ecc71';
+    var cc = (cv==='SI'||cv==='YES')?'#c0392b':'#2ecc71';
+    alRows += '<tr><td>'+lb+'</td>'
+      +'<td style="text-align:center;color:'+ic+';font-weight:bold">'+iv+'</td>'
+      +'<td style="text-align:center;color:'+cc+';font-weight:bold">'+cv+'</td></tr>';
   });
 
-  var css = [
-    'body{font-family:Arial,sans-serif;font-size:10px;margin:0;color:#222;}',
-    '.page{padding:0 18px 18px 28px;position:relative;}',
-    '.sidebar{position:fixed;left:0;top:0;width:7px;height:100%;background:#c0392b;}',
-    '.hdr{display:flex;justify-content:space-between;align-items:flex-end;padding:10px 0 6px;border-bottom:2px solid #c0392b;margin-bottom:8px;}',
-    '.hdr-left .ps{font-size:8px;color:#888;margin-bottom:2px;}',
-    '.hdr-left .nm{font-size:14px;font-weight:bold;color:#222;}',
-    '.hdr-left .an{font-size:9px;color:#888;}',
-    'h2{font-size:9px;font-weight:bold;color:#222;text-transform:uppercase;margin:12px 0 4px;letter-spacing:.5px;}',
-    '.row{display:flex;margin-bottom:3px;}',
-    '.row .lb{font-weight:bold;color:#555;width:180px;flex-shrink:0;font-size:9px;}',
-    '.row .vl{font-size:9px;}',
-    'table{width:100%;border-collapse:collapse;font-size:9px;margin-bottom:8px;}',
-    'th{background:#e8e8e8;padding:4px 6px;text-align:left;font-size:8px;color:#333;}',
-    'td{padding:3px 6px;border-bottom:1px solid #f0f0f0;}',
-    '.nl{font-weight:bold;color:#555;}',
-    '.ni{padding-left:16px;}',
-    'p{font-size:9px;line-height:1.6;margin:0 0 6px;}',
-    '.print-btn{text-align:right;margin-bottom:12px;}',
-    '.print-btn button{background:#c0392b;color:#fff;border:none;padding:7px 18px;font-size:12px;border-radius:4px;cursor:pointer;}',
-    '@media print{.sidebar{position:fixed;}.print-btn{display:none!important;}@page{margin:8mm 8mm 8mm 14mm;}}',
-  ].join('');
+  function infoRow(label, val) {
+    if (!val) return '';
+    return '<tr><td class="ilb">'+label+'</td><td>'+val+'</td></tr>';
+  }
 
-  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+nombre+'</title><style>'+css+'</style></head><body>'
+  var css = ''
+    +'*{box-sizing:border-box;margin:0;padding:0;}'
+    +'body{font-family:Arial,sans-serif;font-size:9.5px;color:#222;background:#fff;}'
+    +'.page{padding:0 18px 20px 26px;}'
+    +'.sidebar{position:fixed;left:0;top:0;bottom:0;width:6px;background:#c0392b;}'
+    +'.hdr{display:flex;justify-content:space-between;align-items:flex-end;padding:10px 0 5px;border-bottom:2px solid #c0392b;margin-bottom:10px;}'
+    +'.hdr-l .ps{font-size:7.5px;color:#999;margin-bottom:2px;}'
+    +'.hdr-l .nm{font-size:15px;font-weight:bold;color:#1a1a1a;line-height:1.2;}'
+    +'.hdr-l .an{font-size:8px;color:#888;margin-top:1px;}'
+    +'.sec{font-size:9px;font-weight:bold;color:#1a1a1a;text-transform:uppercase;letter-spacing:.4px;margin:10px 0 5px;}'
+    +'.sr{display:flex;margin-bottom:3px;}'
+    +'.sl{font-weight:bold;color:#333;width:185px;flex-shrink:0;}'
+    +'.sv{color:#444;}'
+    +'table{width:100%;border-collapse:collapse;font-size:9px;margin-bottom:6px;}'
+    +'.th{background:#ebebeb;padding:4px 6px;font-weight:bold;font-size:8.5px;text-align:left;border-bottom:1px solid #ccc;}'
+    +'td{padding:3px 6px;border-bottom:1px solid #efefef;color:#333;}'
+    +'.nb{font-weight:bold;color:#555;}'
+    +'.ni{font-weight:bold;color:#555;padding-left:14px;}'
+    +'.nota{font-size:8px;color:#888;font-style:italic;margin-bottom:8px;}'
+    +'.ilb{font-weight:bold;color:#333;width:160px;vertical-align:top;padding:3px 6px 3px 0;}'
+    +'.footer{border-top:1px solid #ddd;margin-top:14px;padding-top:6px;font-size:8px;color:#999;display:flex;justify-content:space-between;}'
+    +'.print-btn{text-align:right;margin-bottom:10px;}'
+    +'.print-btn button{background:#c0392b;color:#fff;border:none;padding:6px 16px;font-size:12px;border-radius:4px;cursor:pointer;}'
+    +'p{font-size:9.5px;line-height:1.6;margin-bottom:6px;color:#444;}'
+    +'@media print{'
+      +'.sidebar{position:fixed;left:0;top:0;height:100%;}'
+      +'.print-btn{display:none!important;}'
+      +'@page{margin:8mm 8mm 8mm 13mm;size:A4;}'
+    +'}';
+
+  var footer = '<div class="footer">'
+    +'<div><strong>Rietmann Iberica</strong><br>info@rietmanniberica.com &nbsp; +34 931 592 650</div>'
+    +'<div style="text-align:right">'+T.pie+(d.articulo_no||'')+'</div>'
+    +'</div>';
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+txt.nombre+'</title>'
+    +'<style>'+css+'</style></head><body>'
     +'<div class="sidebar"></div>'
     +'<div class="page">'
     +'<div class="print-btn"><button onclick="window.print()">'+(es?'Imprimir':'Print')+'</button></div>'
+
+    // HEADER
     +'<div class="hdr">'
-      +'<div class="hdr-left">'
+      +'<div class="hdr-l">'
         +'<div class="ps">'+T.prodSpec+'</div>'
-        +'<div class="nm">'+nombre+'</div>'
+        +'<div class="nm">'+txt.nombre+'</div>'
         +'<div class="an">'+T.artNo+(d.articulo_no||'')+'</div>'
       +'</div>'
       +'<div>'+logoHtml+'</div>'
     +'</div>'
+
     // Descripción
-    +(txt.descripcion?'<h2>'+T.desc+'</h2><p>'+txt.descripcion+'</p>':'')
+    +(txt.desc?'<div class="sec">'+T.desc+'</div><p>'+txt.desc+'</p>':'')
+
     // Sensorial
-    +'<h2>'+T.sensorial+'</h2>'
-    +'<div class="row"><div class="lb">'+T.apariencia+'</div><div class="vl">'+(txt.apariencia||'')+'</div></div>'
-    +'<div class="row"><div class="lb">'+T.olor+'</div><div class="vl">'+(txt.olor||'')+'</div></div>'
+    +'<div class="sec">'+T.sensorial+'</div>'
+    +'<div class="sr"><div class="sl">'+T.apariencia+'</div><div class="sv">'+txt.apariencia+'</div></div>'
+    +'<div class="sr"><div class="sl">'+T.olor+'</div><div class="sv">'+txt.olor+'</div></div>'
+
     // Dosis
-    +(txt.dosis?'<h2>'+T.dosis+'</h2><p>'+txt.dosis+'</p>':'')
+    +(txt.dosis?'<div class="sec">'+T.dosis+'</div><p>'+txt.dosis+'</p>':'')
+
     // Ingredientes
-    +'<h2>'+T.ingredientes+'</h2><p>'+ingHTML+'</p>'
-    // Nutrición
-    +(nutRows?'<h2>'+T.nutPre+'</h2><table>'+nutRows+'</table>':'')
+    +'<div class="sec">'+T.ing+'</div><p>'+ingHTML+'</p>'
+
+    // Nutrición premezcla
+    +(nutPreRows
+      ?'<div class="sec">'+T.nutPre+'</div>'
+        +'<table><tr><td class="nb">'+T.energia+'</td><td>'+(d.nut_energia_kj||'')+'kJ / '+(d.nut_energia_kcal||'')+' kcal</td></tr>'
+        +'<tr><td class="nb">'+T.grasa+'</td><td>'+(d.nut_grasa||'')+'g</td></tr>'
+        +(d.nut_grasa_saturada?'<tr><td class="ni">'+T.sat+'</td><td>'+(d.nut_grasa_saturada)+'g</td></tr>':'')
+        +'<tr><td class="nb">'+T.carbs+'</td><td>'+(d.nut_carbohidratos||'')+'g</td></tr>'
+        +(d.nut_azucares?'<tr><td class="ni">'+T.azuc+'</td><td>'+(d.nut_azucares)+'g</td></tr>':'')
+        +(d.nut_fibra?'<tr><td class="nb">'+T.fibra+'</td><td>'+(d.nut_fibra)+'g</td></tr>':'')
+        +'<tr><td class="nb">'+T.prot+'</td><td>'+(d.nut_proteina||'')+'g</td></tr>'
+        +'<tr><td class="nb">'+T.sal+'</td><td>'+(d.nut_sal||'')+'g</td></tr>'
+        +'</table>'
+        +'<p class="nota">'+T.nutNota+'</p>'
+      :'')
+
     // Microbiología
-    +'<h2>'+T.micro+'</h2>'
+    +'<div class="sec">'+T.micro+'</div>'
     +'<p>'+T.microDesc+'</p>'
-    +'<table><tr><th>'+T.param+'</th><th style="text-align:center">'+T.guia+'</th><th style="text-align:center">'+T.critico+'</th></tr>'+microRows+'</table>'
+    +'<table>'
+      +'<tr><td class="th">'+T.param+'</td><td class="th" style="text-align:center">'+T.guia+'</td><td class="th" style="text-align:center">'+T.critico+'</td></tr>'
+      +microRows
+    +'</table>'
+
     // Alérgenos
-    +'<h2>'+T.alergTitle+'</h2>'
-    +'<table><tr><th>'+T.alergCol1+'</th><th style="text-align:center">'+T.alergCol2+'</th><th style="text-align:center">'+T.alergCol3+'</th></tr>'+alergRows+'</table>'
-    // Info General
-    +'<h2>'+T.infoGen+'</h2>'
-    +(txt.omg?'<div class="row"><div class="lb">'+T.omg+'</div><div class="vl">'+txt.omg+'</div></div>':'')
-    +(txt.almacen?'<div class="row"><div class="lb">'+T.almacen+'</div><div class="vl">'+txt.almacen+'</div></div>':'')
-    +(txt.duracion?'<div class="row"><div class="lb">'+T.duracion+'</div><div class="vl">'+txt.duracion+'</div></div>':'')
-    +(txt.embalaje?'<div class="row"><div class="lb">'+T.embalaje+'</div><div class="vl">'+txt.embalaje+'</div></div>':'')
-    +(txt.ley?'<div class="row"><div class="lb">'+T.ley+'</div><div class="vl">'+txt.ley+'</div></div>':'')
-    +(txt.comentarios?'<div class="row"><div class="lb">'+T.coment+'</div><div class="vl">'+txt.comentarios+'</div></div>':'')
-    +'<p style="margin-top:16px;color:#aaa;font-size:8px">Rietmann Iberica &nbsp;|&nbsp; info@rietmanniberica.com &nbsp;|&nbsp; +34931592650</p>'
+    +'<div class="sec">'+T.alerg+'</div>'
+    +'<table>'
+      +'<tr><td class="th">'+T.alCol1+'</td><td class="th" style="text-align:center">'+T.alCol2+'</td><td class="th" style="text-align:center">'+T.alCol3+'</td></tr>'
+      +alRows
+    +'</table>'
+
+    // Info general
+    +'<div class="sec">'+T.infoGen+'</div>'
+    +'<table>'
+      +infoRow(T.omgL, txt.omg)
+      +infoRow(T.almL, txt.alm)
+      +infoRow(T.durL, txt.dur)
+      +infoRow(T.embL, txt.emb)
+      +infoRow(T.leyL, txt.ley)
+      +infoRow(T.certL, d.certificacion||'')
+      +infoRow(T.comL, txt.com)
+      +infoRow(T.verL, d.version||'')
+    +'</table>'
+
+    +footer
     +'</div>'
     +'</body></html>';
+
   return html;
 }
 
