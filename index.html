@@ -313,6 +313,26 @@ textarea { resize: vertical; min-height: 70px; }
   </div>
 </div>
 
+  <!-- RECETAS -->
+  <div id="view-recetas" style="display:none">
+    <div class="card">
+      <h2 id="recetas-title">Recetas</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div>
+          <label>Buscar por nombre</label>
+          <input type="text" id="filtro-receta-nombre" placeholder="Buscar..." oninput="loadRecetas()">
+        </div>
+        <div>
+          <label>Código artículo</label>
+          <input type="text" id="filtro-receta-codigo" placeholder="Ej: 0039201" oninput="loadRecetas()">
+        </div>
+      </div>
+      <div id="receta-list"><p style="color:#888;font-size:14px">Cargando...</p></div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
 <script>
 var SUPA_URL = 'https://lbbpnnvwtanurtjqgcqv.supabase.co';
 var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxiYnBubnZ3dGFudXJ0anFnY3F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjM2NDEsImV4cCI6MjA5MjMzOTY0MX0.a25lrgUlzDM4TSp4c6KOCQ3ERZnSk8-5r2y9DbhRPxg';
@@ -485,10 +505,10 @@ function loadRecetas() {
   el.innerHTML = '<p style="color:#888;font-size:14px">Cargando...</p>';
   var nombre = (document.getElementById('filtro-receta-nombre')||{}).value || '';
   var codigo = (document.getElementById('filtro-receta-codigo')||{}).value || '';
-  var q = SUPABASE_URL+'/rest/v1/recipes?tipo=eq.'+currentRecipeTipo+'&order=articulo_no.asc';
+  var q = SUPA_URL+'/rest/v1/recipes?tipo=eq.'+currentRecipeTipo+'&order=articulo_no.asc';
   if (codigo) q += '&articulo_no=ilike.*'+encodeURIComponent(codigo)+'*';
   if (nombre) q += '&nombre=ilike.*'+encodeURIComponent(nombre)+'*';
-  fetch(q, {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}})
+  fetch(q, {headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}})
   .then(function(r){ return r.json(); })
   .then(function(rows){
     if (!rows.length) { el.innerHTML = '<div class="empty-state">No hay registros.</div>'; return; }
@@ -516,8 +536,8 @@ function askRecetaPrint(id) {
 }
 
 function printReceta(id, lang) {
-  fetch(SUPABASE_URL+'/rest/v1/recipes?id=eq.'+id, {
-    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+  fetch(SUPA_URL+'/rest/v1/recipes?id=eq.'+id, {
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
   })
   .then(function(r){ return r.json(); })
   .then(function(data){
@@ -739,8 +759,8 @@ function confirmLang(lang) {
 function confirmPDF(lang) { confirmLang(lang); }
 
 function loadAndPrint(id, lang) {
-  fetch(SUPABASE_URL+'/rest/v1/'+TABLE+'?id=eq.'+id, {
-    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+  fetch(SUPA_URL+'/rest/v1/'+TABLE+'?id=eq.'+id, {
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
   })
   .then(function(r){ return r.json(); })
   .then(function(data){
