@@ -1184,11 +1184,22 @@ function loadRecetas() {
         +'<div class="product-card-actions">'
           +'<button class="btn btn-pdf" onclick="askRecetaPDF(\''+rid+'\')">PDF</button>'
           +'<button class="btn btn-secondary" onclick="askRecetaPrint(\''+rid+'\')">Imprimir</button>'
+          +'<button class="btn btn-danger" onclick="deleteReceta(\''+rid+'\')">Eliminar</button>'
         +'</div>'
         +'</div>';
     }).join('')+'</div>';
   })
   .catch(function(e){ el.innerHTML='<div class="alert alert-error">Error: '+e.message+'</div>'; });
+}
+
+function deleteReceta(id) {
+  if (!confirm('¿Eliminar este registro? Esta acción no se puede deshacer.')) return;
+  fetch(SUPA_URL+'/rest/v1/recipes?id=eq.'+id, {
+    method:'DELETE',
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+  })
+  .then(function(res){ if(!res.ok) throw new Error('HTTP '+res.status); showAlert('Eliminado.','success'); loadRecetas(); })
+  .catch(function(e){ showAlert('Error: '+e.message,'error'); });
 }
 
 var pendingRecetaId = null;
