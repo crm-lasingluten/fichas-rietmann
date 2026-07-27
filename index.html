@@ -771,24 +771,27 @@ function generatePrintHTML(d, lang) {
   var css = ''
     +'*{box-sizing:border-box;margin:0;padding:0;}'
     +'body{font-family:Arial,sans-serif;font-size:9.5px;color:#222;background:#fff;}'
-    +'.page{padding:0 18px 20px 26px;}'
+    +'.page{padding:0 18px 20px 26px;position:relative;}'
     +'.sidebar{position:fixed;left:0;top:0;bottom:0;width:6px;background:#c0392b;}'
-    +'.hdr{display:flex;justify-content:space-between;align-items:flex-end;padding:10px 0 5px;border-bottom:2px solid #c0392b;margin-bottom:10px;}'
-    +'.hdr-l .ps{font-size:7.5px;color:#999;margin-bottom:2px;}'
-    +'.hdr-l .nm{font-size:15px;font-weight:bold;color:#1a1a1a;line-height:1.2;}'
-    +'.hdr-l .an{font-size:8px;color:#888;margin-top:1px;}'
-    +'.sec{font-size:9px;font-weight:bold;color:#1a1a1a;text-transform:uppercase;letter-spacing:.4px;margin:10px 0 5px;}'
+    +'.corner-wave{position:absolute;top:0;left:-26px;width:60mm;height:60mm;overflow:visible;pointer-events:none;}'
+    +'.hdr{display:flex;justify-content:space-between;align-items:flex-end;padding:10px 0 5px;border-bottom:2px solid #c0392b;margin-bottom:10px;position:relative;}'
+    +'.hdr-l{position:relative;}'
+    +'.hdr-l .ps{font-size:8.5px;color:#1a1a1a;font-weight:bold;letter-spacing:.5px;margin-bottom:3px;}'
+    +'.hdr-l .nm{font-size:16px;font-weight:bold;color:#1a1a1a;line-height:1.2;}'
+    +'.hdr-l .an{font-size:8.5px;color:#1a1a1a;font-weight:bold;margin-top:2px;}'
+    +'.sec{font-size:9px;font-weight:bold;color:#c0392b;text-transform:uppercase;letter-spacing:.4px;margin:10px 0 5px;}'
     +'.sr{display:flex;margin-bottom:3px;}'
     +'.sl{font-weight:bold;color:#333;width:185px;flex-shrink:0;}'
     +'.sv{color:#444;}'
     +'table{width:100%;border-collapse:collapse;font-size:9px;margin-bottom:6px;}'
-    +'.th{background:#ebebeb;padding:4px 6px;font-weight:bold;font-size:8.5px;text-align:left;border-bottom:1px solid #ccc;}'
+    +'.th{background:#f4d9db;padding:4px 6px;font-weight:bold;font-size:8.5px;color:#78201c;text-align:left;border-bottom:1px solid #e0b3b6;}'
     +'td{padding:3px 6px;border-bottom:1px solid #efefef;color:#333;}'
     +'.nb{font-weight:bold;color:#555;}'
     +'.ni{font-weight:bold;color:#555;padding-left:14px;}'
     +'.nota{font-size:8px;color:#888;font-style:italic;margin-bottom:8px;}'
     +'.ilb{font-weight:bold;color:#333;width:160px;vertical-align:top;padding:3px 6px 3px 0;}'
     +'.footer{border-top:1px solid #ddd;margin-top:14px;padding-top:6px;font-size:8px;color:#999;display:flex;justify-content:space-between;}'
+    +'.footer strong{color:#c0392b;}'
     +'.print-btn{text-align:right;margin-bottom:10px;}'
     +'.print-btn button{background:#c0392b;color:#fff;border:none;padding:6px 16px;font-size:12px;border-radius:4px;cursor:pointer;}'
     +'p{font-size:9.5px;line-height:1.6;margin-bottom:6px;color:#444;}'
@@ -807,6 +810,10 @@ function generatePrintHTML(d, lang) {
     +'<style>'+css+'</style></head><body>'
     +'<div class="sidebar"></div>'
     +'<div class="page">'
+    +'<svg class="corner-wave" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">'
+      +'<path d="M0,0 L0,30 C10,32 2,10 16,3 Z" fill="#DEDAD5"/>'
+      +'<path d="M0,0 L0,22 C7,24 1,7 11,2 Z" fill="#C0392B"/>'
+    +'</svg>'
     +'<div class="print-btn"><button onclick="window.print()">'+(es?'Imprimir':'Print')+'</button></div>'
 
     // HEADER
@@ -957,9 +964,11 @@ function generatePDF(id, lang) {
       // franja vertical roja (se mantiene)
       doc.setFillColor(192,57,43); doc.rect(0,0,7,297,'F');
 
-      // circulos decorativos, esquina superior izquierda, apoyados en la franja — no invaden el texto (que arranca en x=mg)
-      doc.setFillColor(244,217,219); doc.circle(0,0,15,'F');
-      doc.setFillColor(192,57,43);   doc.circle(9,9,6,'F');
+      // forma tipo "ola", esquina superior izquierda — gris detras, rojo delante — sin invadir el texto (que arranca en x=mg)
+      doc.setFillColor(222,218,213);
+      doc.lines([[0,30],[10,2,2,-20,16,-27],[-16,-3]],0,0,[1,1],'F',true);
+      doc.setFillColor(192,57,43);
+      doc.lines([[0,22],[7,2,1,-15,11,-20],[-11,-2]],0,0,[1,1],'F',true);
 
       if(LOGO_B64){doc.addImage(LOGO_B64,'PNG',W-52,6,34,22);}
       else{
@@ -968,12 +977,12 @@ function generatePDF(id, lang) {
         doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(100,100,100);
         doc.text('I B E R I C A',W-mg,19,{align:'right'});
       }
-      doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(192,57,43);
-      doc.text(T.prodSpec.toUpperCase(),mg,12,{charSpace:0.35});
+      doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(20,20,20);
+      doc.text(T.prodSpec,mg,12,{charSpace:0.25});
       doc.setFontSize(15);doc.setFont('helvetica','bold');doc.setTextColor(20,20,20);
       var pdfNombre = (isEN && d.nombre_en) ? d.nombre_en : d.nombre;
       doc.text(pdfNombre||'',mg,21);
-      doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(80,80,80);
+      doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(20,20,20);
       doc.text(T.artNo+(d.articulo_no||''),mg,27);
       doc.setDrawColor(192,57,43);doc.setLineWidth(0.6);doc.line(mg,31,W-mg,31);
       y=37;
